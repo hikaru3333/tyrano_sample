@@ -118,10 +118,10 @@ nplayer={
   length: 15,
   jump1: 2,
   jump2: 0,
-  hp: 10,
+  hp: 40,
   mp: 100,
-  headcolor: 'white',
-  bodycolor: 'silver'
+  headcolor: 'violet',
+  bodycolor: 'pink'
 };
 //bullet
 blt = {
@@ -211,10 +211,12 @@ var x_res = 0.2
 var t_count =0;
 var limit = 150;//second
 var mapX = 0;
+var t_3;
 let isFunctionExecuted = true;//フラグリセット
 const controller = {};
 const BLOCK_SIZE = 39;
 const BLOCK_GAP = 1;
+const addhp = 10; //回復りょう
 
 // 弾幕の配列を初期化
 let bullets = [];
@@ -256,19 +258,19 @@ for (var i = 0; i < twrN; i++){
 
 //get map matrix ０：空白、１：破壊可、２：npc、３：item、４：goal、５：破壊不可
 const Matrix = [
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,0,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,2,0,0,0,5,5] ,
-[0,0,5,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,5,5,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,5,5,5,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,0,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,2,0,0,0,5,5] ,
-[0,0,5,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,5,5,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,5,5,5,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,0,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,2,0,0,0,5,5] ,
-[0,0,5,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,5,5,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,5,5,5,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,0,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,2,0,0,0,5,5] ,
-[0,0,5,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,5,5,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,5,5,5,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,0,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,2,0,0,0,5,5] ,
-[0,0,5,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,5,5,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,5,5,5,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,0,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,2,0,0,0,5,5] ,
-[0,0,5,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,5,5,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,4,5,5,5,0] ,
-[0,0,5,5,5,5,5,5,5,5,1,1,5,1,0,0,0,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,0,0,0,5,1,1,5,1,5,5,5,5,5,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,5,0,0,0,0,0,0,0,0,0,0,1,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,5,5] ,
+[0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,5,1,0,0,0,0,0,0,0,0,1,5,1,0,0,0,0,0,0,0,0,5,5,5,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,5,5,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,5,5] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,1,1,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,5,5] ,
+[0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,5,1,0,0,0,0,0,0,0,0,1,5,1,0,0,0,0,0,0,0,0,5,5,5,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,5,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5] ,
+[0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,0,2,0,0,0,0,0,0,0,0,1,3,1,0,0,0,0,0,0,0,0,2,0,5,5] ,
+[0,0,5,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,5,1,0,0,0,0,0,0,0,0,1,5,1,0,0,0,0,0,0,0,0,5,5,5,0] ,
+[0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5] ,
+[0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,2,0,0,3,0,0,0,0,0,0,3,0,0,0,2,1,5,5,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,1,0,0,0,0,2,3,2,0,0,0,0,1,5,1,0,0,0,3,0,0,0,0,0,2,0,0,0,0,3,0,0,0,0,5,5,5,5] ,
+[0,0,3,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,2,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,3,0,0,0,0,0,0,0,0,0,1,5,1,0,0,0,0,0,0,2,0,2,0,0,5] ,
+[0,0,5,0,0,0,0,0,0,0,1,2,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,5,5,1,1,1,1,1,0,0,3,0,0,0,0,0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,5,1,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,5,5] ,
+[5,5,5,5,5,5,5,5,5,5,1,1,0,0,0,0,1,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,1,0,0,0,0,0,0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,0,0,0,5,1,1,5,1,5,5,5,5,5,0,0,0] ,
 ];
 
 
@@ -299,15 +301,19 @@ function drowMap(BLOCK_MATRIX){
     twr.x=twr.initialx-mapX*twr.dx;
     //draw
     const gradient = backctx.createLinearGradient(0, 0, 0, canvas.height);
+    const gradient2 = backctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#2f1144');
     gradient.addColorStop(0.7, twr.color);
     gradient.addColorStop(1, '#2f1144');
     backctx.fillStyle = gradient;
     backctx.fillRect(twr.x, canvas.height*2/3-twr.y*2/3, twr.y/10, twr.y);
-    backctx.fillStyle = 'purple';
-    backctx.fillRect(twr.x, canvas.height*2/3-twr.y*(2/3-twr.w0), twr.y/10, twr.y/100);
-    backctx.fillRect(twr.x, canvas.height*2/3-twr.y*(2/3-twr.w1), twr.y/10, twr.y/100);
-    backctx.fillRect(twr.x, canvas.height*2/3-twr.y*(2/3-twr.w2), twr.y/10, twr.y/100);
+    gradient2.addColorStop(0, 'violet');
+    gradient2.addColorStop(1, 'purple');
+    backctx.fillStyle = gradient2;
+    backctx.fillRect(twr.x+twr.w0*twr.y/10, canvas.height*2/3-twr.y*2/3, twr.y/200, twr.y);
+    backctx.fillRect(twr.x+twr.w1*twr.y/10, canvas.height*2/3-twr.y*2/3, twr.y/200, twr.y);
+    backctx.fillStyle = '#A8BDFF';
+    backctx.fillRect(twr.x+twr.w2*twr.y/10, canvas.height*2/3-twr.y*2/3, twr.y/200, twr.y);
     //calculate process speed
     ps++;
   });  
@@ -318,12 +324,12 @@ function drowMap(BLOCK_MATRIX){
       const blockY = row * (BLOCK_SIZE + BLOCK_GAP);
       if (BLOCK_MATRIX[row][col] === 1) {
         backctx.globalAlpha = 1;
-        backctx.fillStyle = 'gray';
+        backctx.fillStyle = '#A8BDFF';
         backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
       } 
       if (BLOCK_MATRIX[row][col] === 2) {
-        nplayer.x=blockX;
-        nplayer.y=blockY;
+        nplayer.x=blockX+BLOCK_SIZE/2;
+        nplayer.y=blockY+BLOCK_SIZE/2;
         generateNplayer();
         BLOCK_MATRIX[row][col] = 0;
       } 
@@ -383,7 +389,7 @@ function drowMap(BLOCK_MATRIX){
       } 
       if (BLOCK_MATRIX[row][col] === 5) {
         backctx.globalAlpha = 1;
-        backctx.fillStyle = 'silver';
+        backctx.fillStyle = '#914DBE';
         backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
       }     
     }
@@ -414,6 +420,8 @@ function drawPlayers(){
   ctx.fillStyle = player1.bodycolor;
   ctx.fillRect(player1.x-player1.radius*3/4, player1.y+player1.radius/4, player1.radius*3/2, player1.radius/2);
   //canon
+  ctx.lineWidth = 2; // 枠線の幅
+  ctx.strokeStyle = 'black';
   ctx.beginPath();
   ctx.moveTo(player1.x, player1.y);
   ctx.lineTo(player1.x + Math.cos(player1.angle) * player1.length, player1.y + Math.sin(player1.angle) * player1.length);
@@ -464,31 +472,54 @@ function drawPlayers(){
 function drawNplayer(){
   npcs.forEach(npc => {
     npc.x=npc.initialx-mapX
-    //draw non player
-    ctx.globalAlpha = 1/4;
-    ctx.fillStyle = 'pink';
-    ctx.fillRect(npc.x-npc.radius/2, npc.y-15, npc.radius, 4);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = 'green';
-    ctx.fillRect(npc.x-npc.radius/2, npc.y-14, npc.hp/10*npc.radius, 2);
-    ctx.fillStyle = nplayer.headcolor;
-    ctx.fillRect(npc.x-npc.radius/4, npc.y-npc.radius/4, npc.radius/2, npc.radius/2);
-    ctx.fillStyle = nplayer.bodycolor;
-    ctx.fillRect(npc.x-npc.radius*3/4, npc.y+npc.radius/4, npc.radius*3/2, npc.radius/2);
-    //canon
-    ctx.beginPath();
-    ctx.moveTo(npc.x, npc.y);
-    ctx.lineTo(npc.x + Math.cos(npc.angle) * nplayer.length, npc.y + Math.sin(npc.angle) * nplayer.length);
-    ctx.stroke();
+    if(npc.x>-20 && npc.x<canvas.width+20){
+      //hp bar
+      ctx.globalAlpha = 1/4;
+      ctx.fillStyle = 'pink';
+      ctx.fillRect(npc.x-npc.radius/2, npc.y-npc.radius-5, npc.radius, 4);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'green';
+      ctx.fillRect(npc.x-npc.radius/2, npc.y-npc.radius-4, npc.hp/nplayer.hp*npc.radius, 2);
+      //draw non player
+      // 頭部
+      ctx.beginPath();
+      ctx.fillStyle = nplayer.headcolor;
+      ctx.arc(npc.x, npc.y, npc.radius/2, 0, Math.PI*2); 
+      ctx.fill();
+      ctx.beginPath();
+      ctx.lineWidth = 1; // 枠線の幅
+      ctx.strokeStyle = 'red';
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = nplayer.bodycolor;
+      ctx.moveTo(npc.x-npc.radius,npc.y+2);
+      ctx.lineTo(npc.x+npc.radius,npc.y+2); 
+      ctx.lineTo(npc.x, npc.y+npc.radius); // 腕
+      ctx.lineTo(npc.x-npc.radius,npc.y+2);
+      ctx.fill();
+      ctx.moveTo(npc.x-npc.radius,npc.y-2);
+      ctx.lineTo(npc.x+npc.radius,npc.y-2); 
+      ctx.lineTo(npc.x, npc.y-npc.radius); // 腕
+      ctx.lineTo(npc.x-npc.radius,npc.y-2);
+      ctx.fill();
+      ctx.stroke();
+      //canon
+      ctx.lineWidth = 2; // 枠線の幅
+      ctx.beginPath();
+      ctx.moveTo(npc.x, npc.y+npc.radius);
+      ctx.lineTo(npc.x + Math.cos(npc.angle) * npc.radius*0.8, npc.y);
+      ctx.lineTo(npc.x, npc.y-npc.radius);
+      ctx.stroke();
+    }
   });
   npcs = npcs.filter(npc => {
-    //アルゴリズム
+    //動作
     var dx = Math.abs(npc.x-player1.x);
     var dy = Math.abs(npc.y-player1.y)
-    if(dx<150 && dy<500){
-      if(dx<100){
+    if(dx<300 && dy<500){
+      if(dx>150){
         npc.speedx = (player1.x-npc.x)/dx/3
       }
+      else{
       if(player1.x<npc.x){
         npc.angle = Math.PI+Math.atan((player1.y-npc.y)/(player1.x-npc.x));
       }
@@ -497,13 +528,13 @@ function drawNplayer(){
       }
       //biim
       bim2.t = 150
-      if(npc.count>60){
+      if(npc.count>40){
         for (var i = 0; i < 20; i++) {
           bim2.x = npc.x + 25*Math.cos(npc.angle);
           bim2.y = npc.y + 25*Math.sin(npc.angle);
           bim2.radius = i/5+1
-          bim2.speedx = (i/20+2)*Math.cos(npc.angle);
-          bim2.speedy = (i/20+2)*Math.sin(npc.angle);
+          bim2.speedx = (3-i/20)*Math.cos(npc.angle);
+          bim2.speedy = (3-i/20)*Math.sin(npc.angle);
           shootBiim2();
         }
         npc.count=0;
@@ -519,14 +550,14 @@ function drawNplayer(){
         ctx.fill();
         ctx.closePath();
         ctx.globalAlpha = 1;
-      }
+      }}
     }
     //player移動
     npc.initialx += npc.speedx;
     npc.y += npc.speedy;
     mapX
     //重力
-    npc.speedy += gravity;
+    npc.speedy += gravity/10;
     //抵抗
     if(npc.speedx>0.1){
       npc.speedx-=npc.speedx/3*x_res;
@@ -785,7 +816,7 @@ function generateNplayer(){
     radius: nplayer.radius,
     speedx: nplayer.speedx,
     speedy: nplayer.speedy,
-    hp: 10,
+    hp: nplayer.hp,
     count: 0,
     angle: 0
   });
@@ -916,14 +947,14 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           if(npc.y + npc.radius/2 > blockY && npc.y < blockY + BLOCK_SIZE){
             if(npc.x + npc.radius/2 > blockX && npc.x < blockX + BLOCK_SIZE/3){
               npc.speedx *= -0.8;
-              npc.x=blockX - npc.radius/2;
+              npc.initialx=npc.initialx-1;
             }     
           }//左
           if(npc.y + npc.radius/2> blockY && npc.y < blockY + BLOCK_SIZE){
-          if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
-            npc.speedx *= -0.8;
-            npc.x=blockX + BLOCK_SIZE + npc.radius/2;
-          }     
+            if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
+              npc.speedx *= -0.8;
+              npc.initialx=npc.initialx+1;
+            }     
           }//右
           //for calculate process speed
           ps++;
@@ -1016,15 +1047,17 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
         });     
       }
       if (BLOCK_MATRIX[row][col] === 2){
-        if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
-          player1.speedy -= 1/8;
-        }
+
         //for calculate process speed
         ps++;
       }
       if (BLOCK_MATRIX[row][col] === 3){
         if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
           BLOCK_MATRIX[row][col] = 0;
+          //回復(ハンデ
+          if(player1.hp<100-addhp){player1.hp += addhp}
+          else {player1.hp=100}
+          t_3=t_count/60;
           if(player1.type === 0){
             player1.type=1; 
             player1.headcolor='red'; 
@@ -1106,14 +1139,14 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           if(npc.y + npc.radius/2 > blockY && npc.y < blockY + BLOCK_SIZE){
             if(npc.x + npc.radius/2 > blockX && npc.x < blockX + BLOCK_SIZE/3){
               npc.speedx *= -0.8;
-              npc.x=blockX - npc.radius/2;
+              npc.initialx=npc.initialx-1;
             }     
           }//左
           if(npc.y + npc.radius/2> blockY && npc.y < blockY + BLOCK_SIZE){
-          if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
-            npc.speedx *= -0.8;
-            npc.x=blockX + BLOCK_SIZE + npc.radius/2;
-          }     
+            if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
+              npc.speedx *= -0.8;
+              npc.initialx=npc.initialx+1;
+            }     
         }//右
         //for calculate process speed
         ps++;
@@ -1605,7 +1638,8 @@ function controll(){
         bim2.speedy = (j+1)*Math.cos(i*Math.PI/5);
         shootBiim2();
       }
-    }
+    } 
+    mapX += tele1.x-player1.x
     player1.x = tele1.x;
     player1.y = tele1.y;
   }
@@ -1771,7 +1805,35 @@ function controll(){
     ctx.stroke();
     ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
   }
-
+  //強制退去
+  if(controller['KeyG']){
+    if(player1.mp>80){
+      player1.mp-=80;
+      bim1.t = 10;
+      for (var i = 0; i < 100; i++) {
+        bim1.x = player1.x;
+        bim1.y = player1.y;
+        bim1.radius = 3;
+        bim1.speedx = -3*Math.sin(i/50*Math.PI);
+        bim1.speedy = 3*Math.cos(i/50*Math.PI);
+        shootBiim1();
+      }
+      npcs.forEach(npc => {
+        if(npc.x>0 && npc.x<canvas.width){
+          npc.hp=1
+            for (var i = 0; i < 30; i++) {
+            blt.f = 3;
+            blt.x = npc.x;
+            blt.y = npc.y;
+            blt.radius = 3
+            blt.speedx = blt.f*Math.cos(i*Math.PI/15);
+            blt.speedy = blt.f*Math.sin(i*Math.PI/15);
+            shootBullet();
+          }
+        }
+      })
+    }
+  }
 }
 //push 'space' for game start and restart
 function handleKeyPress(event) {
@@ -1934,8 +1996,6 @@ function start(){
     ctx.fillText("Escape and enter the warp gate to survive", 150, 200);
   ctx.font = '40px Arial';
     ctx.fillText("Push SpaceKey to Start", 140, 300);
-  ctx.lineWidth = 2; // 枠線の幅
-  ctx.strokeStyle = 'black';
 }
 
 //post-processing
@@ -2013,22 +2073,16 @@ function gameLoop() {
   //ギミック
   Rain(limit/2);
   Rain(limit-20);
-  canon(15);
+  canon(20);
   canon(limit/2);
   canon(limit*3/4);
   canon(limit/2);
 
   //text
-  Text('Push [w][a][s][d] to move',0)
-  Text('Push Shift on the left',1.5)
-  Text('Push Shift on the left',3)
-  Text('Push [f] This is special move',4.5)
-  Text('Push [f] This is special move',6)
-  Text('We dont have enough time...',8)
-  Text('Lets GO',9.5)
-  Text('→→→',11)
-  Text('you are aimed',14) 
-  Text('you are aimed Caution!',15.5) 
+  Text('←←←You can +10hp',0)
+  Text('←←←You can +10hp',1.5) 
+  Text('defeat that enmey→→→',3) 
+  Text('+'+addhp+'HP',t_3)
   
 
   //操作

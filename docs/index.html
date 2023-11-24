@@ -102,7 +102,7 @@ nplayer={
   length: 15,
   jump1: 2,
   jump2: 0,
-  hp: 10,
+  hp: 20,
   mp: 100,
   headcolor: 'white',
   bodycolor: 'silver'
@@ -447,22 +447,24 @@ function drawPlayers(){
 function drawNplayer(){
   npcs.forEach(npc => {
     npc.x=npc.initialx-mapX
-    //draw non player
-    ctx.globalAlpha = 1/4;
-    ctx.fillStyle = 'pink';
-    ctx.fillRect(npc.x-npc.radius/2, npc.y-15, npc.radius, 4);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = 'green';
-    ctx.fillRect(npc.x-npc.radius/2, npc.y-14, npc.hp/10*npc.radius, 2);
-    ctx.fillStyle = nplayer.headcolor;
-    ctx.fillRect(npc.x-npc.radius/4, npc.y-npc.radius/4, npc.radius/2, npc.radius/2);
-    ctx.fillStyle = nplayer.bodycolor;
-    ctx.fillRect(npc.x-npc.radius*3/4, npc.y+npc.radius/4, npc.radius*3/2, npc.radius/2);
-    //canon
-    ctx.beginPath();
-    ctx.moveTo(npc.x, npc.y);
-    ctx.lineTo(npc.x + Math.cos(npc.angle) * nplayer.length, npc.y + Math.sin(npc.angle) * nplayer.length);
-    ctx.stroke();
+    if(npc.x>-20 && npc.x<canvas.width+20){
+      //draw non player
+      ctx.globalAlpha = 1/4;
+      ctx.fillStyle = 'pink';
+      ctx.fillRect(npc.x-npc.radius/2, npc.y-15, npc.radius, 4);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'green';
+      ctx.fillRect(npc.x-npc.radius/2, npc.y-14, npc.hp/nplayer.hp*npc.radius, 2);
+      ctx.fillStyle = nplayer.headcolor;
+      ctx.fillRect(npc.x-npc.radius/4, npc.y-npc.radius/4, npc.radius/2, npc.radius/2);
+      ctx.fillStyle = nplayer.bodycolor;
+      ctx.fillRect(npc.x-npc.radius*3/4, npc.y+npc.radius/4, npc.radius*3/2, npc.radius/2);
+      //canon
+      ctx.beginPath();
+      ctx.moveTo(npc.x, npc.y);
+      ctx.lineTo(npc.x + Math.cos(npc.angle) * nplayer.length, npc.y + Math.sin(npc.angle) * nplayer.length);
+      ctx.stroke();
+    }
   });
   npcs = npcs.filter(npc => {
     //アルゴリズム
@@ -768,7 +770,7 @@ function generateNplayer(){
     radius: nplayer.radius,
     speedx: nplayer.speedx,
     speedy: nplayer.speedy,
-    hp: 10,
+    hp: nplayer.hp,
     count: 0,
     angle: 0
   });
@@ -899,14 +901,14 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           if(npc.y + npc.radius/2 > blockY && npc.y < blockY + BLOCK_SIZE){
             if(npc.x + npc.radius/2 > blockX && npc.x < blockX + BLOCK_SIZE/3){
               npc.speedx *= -0.8;
-              npc.x=blockX - npc.radius/2;
+              npc.initialx=npc.initialx-1;
             }     
           }//左
           if(npc.y + npc.radius/2> blockY && npc.y < blockY + BLOCK_SIZE){
-          if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
-            npc.speedx *= -0.8;
-            npc.x=blockX + BLOCK_SIZE + npc.radius/2;
-          }     
+            if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
+              npc.speedx *= -0.8;
+              npc.initialx=npc.initialx+1;
+            }     
           }//右
           //for calculate process speed
           ps++;
@@ -999,9 +1001,7 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
         });     
       }
       if (BLOCK_MATRIX[row][col] === 2){
-        if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
-          player1.speedy -= 1/8;
-        }
+        
         //for calculate process speed
         ps++;
       }
@@ -1089,14 +1089,14 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           if(npc.y + npc.radius/2 > blockY && npc.y < blockY + BLOCK_SIZE){
             if(npc.x + npc.radius/2 > blockX && npc.x < blockX + BLOCK_SIZE/3){
               npc.speedx *= -0.8;
-              npc.x=blockX - npc.radius/2;
+              npc.initialx=npc.initialx-1;
             }     
           }//左
           if(npc.y + npc.radius/2> blockY && npc.y < blockY + BLOCK_SIZE){
-          if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
-            npc.speedx *= -0.8;
-            npc.x=blockX + BLOCK_SIZE + npc.radius/2;
-          }     
+            if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
+              npc.speedx *= -0.8;
+              npc.initialx=npc.initialx+1;
+            }     
         }//右
         //for calculate process speed
         ps++;
@@ -1589,6 +1589,7 @@ function controll(){
         shootBiim2();
       }
     }
+    mapX += tele1.x-player1.x
     player1.x = tele1.x;
     player1.y = tele1.y;
   }
@@ -1957,7 +1958,7 @@ function goalin(){
   ctx.fillStyle = 'gold';
   ctx.globalAlpha = 1;
   ctx.fillText('You survived!', 150, 300);
-  ctx.fillText('↓Next stage↓', 150, 370);
+  ctx.fillText('//次', 150, 370);
   ctx.fillText(player1.result, 300, 110);
   ctx.fillText(player1.taken, 300, 170);
   ctx.fillText(player1.kill, 300, 230);
