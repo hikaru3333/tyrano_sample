@@ -255,6 +255,46 @@ const Matrix = [
 [0,0,5,5,5,5,5,5,5,5,0,0,0,0,0,0,0,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,0,0,0,5,0,0,0,0,5,5,5,5,5,0,0,0] ,
 ];
 
+//load sounds
+var bombsound = new Audio('sound/bomb1.mp3');
+var cannonsound = new Audio('sound/cannon2.mp3');
+var itemsound = new Audio('sound/power-up1.mp3');
+var shotsound = new Audio('sound/shot1.mp3');
+var breaksound = new Audio('sound/blow4.mp3');
+var boostsound = new Audio('sound/blow3.mp3');
+var biimsound = new Audio('sound/beamgun2.mp3');
+var warpsound = new Audio('sound/enemy-advent1.mp3');
+var rocketsound = new Audio('sound/rocket-launcher1.mp3');
+//音量調整
+bombsound.volume = 0.2;
+cannonsound.volume = 0.2;
+itemsound.volume = 0.2;
+shotsound.volume = 0.2;
+breaksound.volume = 0.2;
+boostsound.volume = 0.2;
+biimsound.volume = 0.2;
+warpsound.volume = 0.2;
+rocketsound.volume = 0.2;
+//追加：web audio APIによるサウンド　テスト
+const audio_ctx = new AudioContext();
+let audio_buffer = null;
+let audio_buffer_node = null;
+var gainNode = audio_ctx.createGain();
+(async () => {
+  const response = await fetch('sound/cannon2.mp3') // fetch で mp3 ファイルをダウンロードして ArrayBuffer を取得
+  const response_buffer = await response.arrayBuffer();
+  audio_buffer = await audio_ctx.decodeAudioData(response_buffer);// ArrayBuffer をデコードして AudioBuffer オブジェクトを取得
+  gainNode.connect(audio_ctx.destination);
+  gainNode.gain.value = 0.1;
+  prepareAudioBufferNode(); // 初回再生のために準備を行う
+})();
+// 音源再生のために準備を行う
+function prepareAudioBufferNode() {
+  audio_buffer_node = audio_ctx.createBufferSource();
+  audio_buffer_node.buffer = audio_buffer;
+  audio_buffer_node.connect(gainNode)
+  //audio_buffer_node.connect(audio_ctx.destination);
+}
 
 // ランダムなRGB値を生成する関数
 function getRandomColor() {
@@ -609,6 +649,7 @@ function drawRocket(){
   ctx.fillStyle = 'gray'; 
     ctx.globalAlpha = 0.4; 
     rockets.forEach(rocket => {
+      rocket.x=rocket.initialx-mapX;
       ctx.moveTo(rocket.x,rocket.y);
       ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle) ,rocket.y-2*rocket.width*Math.sin(rocket.angle));
       ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle+Math.PI/6) ,rocket.y-2*rocket.width*Math.sin(rocket.angle+Math.PI/6));
@@ -624,7 +665,7 @@ function drawRocket(){
     ctx.globalAlpha = 1;
   // 弾幕を移動
   rockets = rockets.filter(rocket => {
-    rocket.x += rocket.speedX;
+    rocket.initialx += rocket.speedX;
     rocket.y += rocket.speedY;
     //画面外ループしない
   return rocket.x > -100 && rocket.x < canvas.width+100 && rocket.y > -100 && rocket.y < canvas.height+100;
@@ -673,18 +714,20 @@ function Rain(t){
     ctx.globalAlpha = 0.5-Math.abs(t+15-t_count/60)/30;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     //rain
-    blt.x = Math.random()*canvas.width;
-    blt.y = 120;
-    blt.radius = 3
-    blt.speedx = 0;
-    blt.speedy = 0;
-    shootBullet();
-    enm.x = Math.random()*canvas.width;
-    enm.y = 120;
-    enm.radius = 3
-    enm.speedx = 0;
-    enm.speedy = 0;
-    shootEnemy();  
+    if(Math.random()<0.1){
+      blt.x = Math.random()*canvas.width;
+      blt.y = 120;
+      blt.radius = 3
+      blt.speedx = 0;
+      blt.speedy = 0;
+      shootBullet();
+      enm.x = Math.random()*canvas.width;
+      enm.y = 120;
+      enm.radius = 3
+      enm.speedx = 0;
+      enm.speedy = 0;
+      shootEnemy();  
+    }
     //thunder
     if(t_count > (t+13)*60 && t_count < (t+17)*60){
       //draw, damage for players
@@ -693,6 +736,11 @@ function Rain(t){
       ctx.font = '50px Arial';
       ctx.fillText("!CAUTION!", canvas.width/2-100, canvas.height/2);
       if(t_count > t*60+33*30){
+        if(t_count==t*60+991){
+          biimsound.pause();
+          biimsound.currentTime = 0; // 再生位置をリセット
+          biimsound.play(); // サウンドを再生
+        }
         ctx.globalAlpha = 0.2;
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -703,8 +751,9 @@ function Rain(t){
         if(player1.x+player1.radius/2>rain.x1-10 && player1.x-player1.radius/2<rain.x1+10){
           player1.hp-=5;
         }
-        /*for (let i = 0; i < rain.x2.length; i++){
-        ctx.globalAlpha = 0.1;
+        /* 雲の描画　不要
+        for (let i = 0; i < rain.x2.length; i++){
+          ctx.globalAlpha = 0.1;
           ctx.fillStyle = 'white';
           ctx.fillRect(rain.x2-5, 0, 10, canvas.height);
           ctx.fillStyle = 'yellow';
@@ -714,7 +763,8 @@ function Rain(t){
               npc.hp-=5;
             }
           });
-        }*/
+        }
+        */
       }
       else if(t_count < t*60+31*30) {
         ctx.globalAlpha = 0.1;
@@ -723,7 +773,8 @@ function Rain(t){
         ctx.fillRect(rain.x1-5, 0, 10, canvas.height);
         ctx.fillStyle = 'yellow';
         ctx.fillRect(rain.x1-2, 0, 4, canvas.height);
-        /*npcs.forEach((npc, npcIndex) => {
+        /*　npcに雷当たるやつ
+        npcs.forEach((npc, npcIndex) => {
           rain.x2.push(npc.x);
         });
         for (let i = 0; i < rain.x2.length; i++){
@@ -731,14 +782,17 @@ function Rain(t){
           ctx.fillRect(rain.x2[i]-5, 0, 10, canvas.height);
           ctx.fillStyle = 'yellow';
           ctx.fillRect(rain.x2[i]-2, 0, 4, canvas.height);
-        }*/
+        }
+        */
       }
       else{
         ctx.fillStyle = 'yellow';
         ctx.fillRect(rain.x1-2, 0, 4, canvas.height);
-        /*for (let i = 0; i < rain.x2.length; i++){
+        /* npc用
+        for (let i = 0; i < rain.x2.length; i++){
           ctx.fillRect(rain.x2[i]-2, 0, 4, canvas.height);
-        }*/
+        }
+        */
       }
     }
   }
@@ -833,6 +887,7 @@ function shootBiim2(){
   })};
 function shootRocket(){
   rockets.push({
+    initialx:rkt.x+mapX,
     x: rkt.x,
     y: rkt.y,
     width: rkt.radius,
@@ -978,6 +1033,9 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
               rocket.y + rocket.width > blockY && rocket.y - rocket.width< blockY + BLOCK_SIZE) {
             // ブロックを破壊
             BLOCK_MATRIX[row][col] = 0;
+            breaksound.pause();
+            breaksound.currentTime = 0; // 再生位置をリセット
+            breaksound.play(); // サウンドを再生
             for (var i = 0; i < 20; i++) {
               enm.x = blockX + BLOCK_SIZE/2 + 10*Math.cos(i*Math.PI/10);
               enm.y = blockY + BLOCK_SIZE/2 + 10*Math.sin(i*Math.PI/10);
@@ -1007,6 +1065,9 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
       }
       if (BLOCK_MATRIX[row][col] === 3){
         if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
+          itemsound.pause();
+          itemsound.currentTime = 0; // 再生位置をリセット
+          itemsound.play(); // サウンドを再生
           BLOCK_MATRIX[row][col] = 0;
           if(player1.type === 0){
             player1.type=1; 
@@ -1409,10 +1470,10 @@ function playerRocket(){
         ctx.fillRect(npc.x - npc.radius/2, npc.y - npc.radius/4, npc.radius, npc.radius);
         ctx.globalAlpha = 1;
         player1.result+=1/4;
-        npc.x = rocket.x + npc.speedx;
-        npc.y = rocket.y + npc.speedy;
+        npc.x = rocket.x;
+        npc.y = rocket.y;
         if(npc.hp>=0){
-          npc.hp-=1/4;
+          npc.hp-=1;
         }
         var i = Math.random();
         bim2.x = npc.x + 15*Math.cos(2*i*Math.PI);
@@ -1427,6 +1488,7 @@ function playerRocket(){
     });
   });
   //rocket-player1
+  /* 暫定的に出番こない
   rockets.forEach((rocket, rocketIndex) => {  
     if (
       rocket.x - rocket.width< player1.x + player1.radius/2 &&
@@ -1455,6 +1517,7 @@ function playerRocket(){
     ps++;
     }
   });
+  */
 }
 function rocketBltEnmBim(){
   rockets.forEach((rocket, rocketIndex) => {
@@ -1592,6 +1655,9 @@ function controll(){
     mapX += tele1.x-player1.x
     player1.x = tele1.x;
     player1.y = tele1.y;
+    warpsound.pause();
+    warpsound.currentTime = 0; // 再生位置をリセット
+    warpsound.play(); // サウンドを再生
   }
   }
   else if(controller['KeyF']){
@@ -1668,6 +1734,9 @@ function controll(){
       player1.jump1-=1;
       player1.mp-=10;
       bim1.t = 30
+      boostsound.pause();
+      boostsound.currentTime = 0; // 再生位置をリセット
+      boostsound.play(); // サウンドを再生
       for (var i = 0; i < 50; i++) {
         bim1.x = player1.x;
         bim1.y = player1.y + player1.radius/2;
@@ -1682,6 +1751,9 @@ function controll(){
       player1.jump1-=1;
       player1.mp-=5;
       bim1.t = 30
+      boostsound.pause();
+      boostsound.currentTime = 0; // 再生位置をリセット
+      boostsound.play(); // サウンドを再生
       for (var i = 0; i < 50; i++) {
         bim1.x = player1.x;
         bim1.y = player1.y + player1.radius/2;
@@ -1757,7 +1829,8 @@ function controll(){
   }
 
 }
-//push 'space' for game start and restart
+
+//for game start and restart
 function handleKeyPress(event) {
   if (event.code === "Space" && !isFunctionExecuted){
     if(player1.hp<1){
@@ -1768,6 +1841,9 @@ function handleKeyPress(event) {
     isFunctionExecuted = false; // フラグをtrue→二度実行されない
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     backctx.clearRect(0, 0, canvas.width, canvas.height);
+    //sound
+    audio_buffer_node.start(0); // オーディオを再生
+    prepareAudioBufferNode(); // 次回の再生のために準備を行う 
     //main
     drowMap(Matrix);
     gameLoop();
@@ -1778,6 +1854,12 @@ function handleKeyPress(event) {
 function superbullet(){
   if(player1.mp>0){
   if(blt.count>14 && player1.mp>=10){
+    //cannonsound.pause();
+    //cannonsound.currentTime = 0; // 再生位置をリセット
+    //cannonsound.play(); // サウンドを再生
+    audio_buffer_node.start(0); // オーディオを再生
+    prepareAudioBufferNode(); // 次回の再生のために準備を行う
+    //弾
     blt.f = 8;
     blt.x = player1.x + (20)*Math.cos(player1.angle);
     blt.y = player1.y + (20)*Math.sin(player1.angle);
@@ -1795,6 +1877,9 @@ function superbullet(){
 function shield(){
   if(player1.mp>0){
     if(blt.count>60 && player1.mp>30){
+      bombsound.pause();
+      bombsound.currentTime = 0; // 再生位置をリセット
+      bombsound.play(); // サウンドを再生
       for (var i = 0; i < 60; i++) {
         blt.f = 4;
         blt.x = player1.x;
@@ -1826,6 +1911,9 @@ function superbiim(){
       bim1.count=0;
       player1.speedx -= Math.cos(player1.angle);
       player1.speedy -= Math.sin(player1.angle);
+      biimsound.pause();
+      biimsound.currentTime = 0; // 再生位置をリセット
+      biimsound.play(); // サウンドを再生
     }
     else{
       player1.mp-=1;
@@ -1843,6 +1931,9 @@ function superbiim(){
 function biimshot(){
   if(player1.mp>0){bim1.t = 150
   if(bim1.count>10){
+    shotsound.pause();
+    shotsound.currentTime = 0; // 再生位置をリセット
+    shotsound.play(); // サウンドを再生
     for (var i = 0; i < 20; i++) {
       bim1.x = player1.x + 25*Math.cos(player1.angle);
       bim1.y = player1.y + 25*Math.sin(player1.angle);
@@ -1869,6 +1960,9 @@ function biimshot(){
 }
 function bombrocket(){
   if(player1.mp>0){if(rkt.count1>40){
+    rocketsound.pause();
+    rocketsound.currentTime = 0; // 再生位置をリセット
+    rocketsound.play(); // サウンドを再生
     rkt.angle = player1.angle;
     rkt.x = player1.x + 25*Math.cos(player1.angle);
     rkt.y = player1.y + 25*Math.sin(player1.angle);
@@ -1906,11 +2000,12 @@ function Text(text,t){
 
 //start
 function start(){
+  //initial background
   const image = new Image();
   image.onload = function() {
     backctx.drawImage(image, 0, 0, canvas.width, canvas.height);
   };
-  image.src = 'city.png';
+  image.src = 'picture/city.png';
   ctx.fillStyle = '#ECB8B8'; //236, 184, 184
   ctx.font = '20px Arial';
     ctx.fillText("A nuclear bomb coming in "+limit+" sec", 150, 100);
@@ -1995,12 +2090,11 @@ function gameLoop() {
     drawgoal()}
 
   //ギミック
-  Rain(limit/2);
+  Rain(20);
   Rain(limit-20);
   canon(15);
   canon(limit/2);
   canon(limit*3/4);
-  canon(limit/2);
 
   //text
   Text('Push [w][a][s][d] to move',0)
@@ -2070,6 +2164,9 @@ function gameLoop() {
         blt.speedy = 3*Math.sin(i*Math.PI/10);
         shootBullet();
       }
+      bombsound.pause();
+      bombsound.currentTime = 0; // 再生位置をリセット
+      bombsound.play(); // サウンドを再生
     }
   });
 
