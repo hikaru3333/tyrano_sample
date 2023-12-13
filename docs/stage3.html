@@ -31,10 +31,10 @@
       }
       .button {
         position: absolute;
-        left: 300px;
+        left: 100px;
         top: 670px;
         transform: translate(-50%, -50%);
-        display: none;
+        display: block;
         padding: 10px;
         background-color: midnightblue;
         color: white;
@@ -43,6 +43,22 @@
         transition: color 0.3s ease;
       }
       .button:hover {
+        color: #2f1144;
+      }
+      .button2 {
+        position: absolute;
+        left: 300px;
+        top: 670px;
+        transform: translate(-50%, -50%);
+        display: none;
+        padding: 10px;
+        background-color: purple;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: color 0.3s ease;
+      }
+      .button2:hover {
         color: #2f1144;
       }
     </style>
@@ -55,6 +71,7 @@
       <h2>[f]:SPECIAL MOVE</h2>
     </div>
     <button id="button1" class="button">Back to Stage 2</button>
+    <button id="button2" class="button2">Go to Stage 4</button>
     <canvas id="gameCanvas" width="610" height="490"></canvas>
     <canvas id="backgroundCanvas" width="610" height="490"></canvas>
     <script>
@@ -67,6 +84,7 @@ const backgroundCanvas = document.getElementById('backgroundCanvas');
 const backctx = backgroundCanvas.getContext('2d');
 //get the location of button1
 var button1 = document.getElementById("button1");
+var button2 = document.getElementById("button2");
 
 //initial states
 //player1
@@ -190,15 +208,19 @@ goal = {
 
 
 //parameters
+var stage = 3
 var gravity = 0.1
 var x_res = 0.2
 var t_count =0;
 var limit = 150;//second
 var mapX = 0;
+var t_3 = 0; //回復時に使用する現在時間
+var ishoversound = 0;
 let isFunctionExecuted = true;//フラグリセット
 const controller = {};
 const BLOCK_SIZE = 39;
 const BLOCK_GAP = 1;
+const addhp = 10; //回復りょう
 
 // 弾幕の配列を初期化
 let bullets = [];
@@ -219,6 +241,22 @@ let items = [];
 var ps = 0;
 var ps_true = 0;
 
+//get map matrix ０：空白、１：破壊可、２：npc、３：item、４：goal、５：破壊不可
+const Matrix = [
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,3,0,0,4,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,5,5,5,5,5,5,5,5,1,1,1,1,1,1,1,1,1,1,5,5,5,5,5,5,5,0,0,0,1,1,1,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,0,0,0,5,0,0,0,0,5,5,5,5,1,1,1,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] 
+];
 //Mapの天井地面背景の準備
 let twrs=[];
 const twrN=50;
@@ -238,43 +276,30 @@ for (var i = 0; i < twrN; i++){
   });
 }
 
-//get map matrix ０：空白、１：破壊可、２：npc、３：item、４：goal、５：破壊不可
-const Matrix = [
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,3,0,0,4,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,5,5,5,5,5,5,5,5,1,1,1,0,0,0,0,1,1,1,5,5,5,5,5,5,5,0,0,0,1,1,1,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,0,0,0,5,0,0,0,0,5,5,5,5,1,1,1,0] ,
-];
-
 //load sounds
 var bombsound = new Audio('sound/bomb1.mp3');
 var cannonsound = new Audio('sound/cannon2.mp3');
 var itemsound = new Audio('sound/power-up1.mp3');
 var shotsound = new Audio('sound/shot1.mp3');
 var breaksound = new Audio('sound/blow4.mp3');
-var boostsound = new Audio('sound/blow3.mp3');
+var boostsound = new Audio('sound/booster1.mp3');
 var biimsound = new Audio('sound/beamgun2.mp3');
 var warpsound = new Audio('sound/enemy-advent1.mp3');
 var rocketsound = new Audio('sound/rocket-launcher1.mp3');
+var hoversound = new Audio('sound/electric-fan-high1.mp3');
+var landsound = new Audio('sound/landing1.mp3');
 //音量調整
 bombsound.volume = 0.2;
-cannonsound.volume = 0.2;
-itemsound.volume = 0.2;
-shotsound.volume = 0.2;
+cannonsound.volume = 0.1;
+itemsound.volume = 0.1;
+shotsound.volume = 0.1;
 breaksound.volume = 0.2;
 boostsound.volume = 0.2;
 biimsound.volume = 0.2;
 warpsound.volume = 0.2;
 rocketsound.volume = 0.2;
+hoversound.volume = 0.2;
+landsound.volume = 0.2;
 //追加：web audio APIによるサウンド　テスト
 const audio_ctx = new AudioContext();
 let audio_buffer = null;
@@ -510,40 +535,76 @@ function drawNplayer(){
     //アルゴリズム
     var dx = Math.abs(npc.x-player1.x);
     var dy = Math.abs(npc.y-player1.y)
-    if(dx<150 && dy<500){
-      if(dx<100){
+    if(dx<300 && dy<500){
+      if(dx>150){
         npc.speedx = (player1.x-npc.x)/dx/3
       }
-      if(player1.x<npc.x){
-        npc.angle = Math.PI+Math.atan((player1.y-npc.y)/(player1.x-npc.x));
-      }
-      else{
-        npc.angle = Math.atan((player1.y-npc.y)/(player1.x-npc.x));
-      }
-      //biim
-      bim2.t = 150
-      if(npc.count>60){
-        for (var i = 0; i < 20; i++) {
-          bim2.x = npc.x + 25*Math.cos(npc.angle);
-          bim2.y = npc.y + 25*Math.sin(npc.angle);
-          bim2.radius = i/5+1
-          bim2.speedx = (i/20+2)*Math.cos(npc.angle);
-          bim2.speedy = (i/20+2)*Math.sin(npc.angle);
-          shootBiim2();
+      else if(dy>50){
+        if(player1.x<npc.x){
+          npc.angle = Math.PI+Math.atan((player1.y-npc.y)/(player1.x-npc.x));
         }
-        npc.count=0;
-        npc.speedx -= Math.cos(npc.angle)/6;
-        npc.speedy -= Math.sin(npc.angle)/6;
+        else{
+          npc.angle = Math.atan((player1.y-npc.y)/(player1.x-npc.x));
+        }
+        //biim
+        bim2.t = 150
+        if(npc.count>60){
+            bim2.x = npc.x + 25*Math.cos(npc.angle);
+            bim2.y = npc.y + 25*Math.sin(npc.angle);
+          for (var i = 0; i < 20; i++) {
+            bim2.radius = i/5+1
+            bim2.speedx = (i/20+2)*Math.cos(npc.angle);
+            bim2.speedy = (i/20+2)*Math.sin(npc.angle);
+            shootBiim2();
+          }
+          shotsound.pause();
+          shotsound.currentTime = 0; // 再生位置をリセット
+          shotsound.play(); // サウンドを再生
+          npc.count=0;
+          npc.speedx -= Math.cos(npc.angle)/6;
+          npc.speedy -= Math.sin(npc.angle)/6;
+        }
+        else{
+          npc.count+=1;
+          ctx.beginPath();
+          ctx.fillStyle = nplayer.headcolor;
+          ctx.globalAlpha = npc.count/60;
+          ctx.arc(npc.x + 25*Math.cos(npc.angle), npc.y + 25*Math.sin(npc.angle), npc.count/12, 0,Math.PI * 2);
+          ctx.fill();
+          ctx.closePath();
+          ctx.globalAlpha = 1;
+        }
       }
-      else{
-        npc.count+=1;
-        ctx.beginPath();
-        ctx.fillStyle = nplayer.headcolor;
-        ctx.globalAlpha = npc.count/60;
-        ctx.arc(npc.x + 25*Math.cos(npc.angle), npc.y + 25*Math.sin(npc.angle), npc.count/12, 0,Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-        ctx.globalAlpha = 1;
+      //cannon
+      if(dy<50){
+        var vy = 3.5;
+        var k = 71
+        var vx = (npc.x-player1.x)/k - player1.speedx
+        if(player1.x<npc.x){
+          npc.angle = Math.PI+Math.atan(vy/vx);
+        }
+        else{
+          npc.angle = Math.atan(vy/vx);
+        }
+        if(npc.count>60){
+            enm.x = npc.x;
+            enm.y = npc.y;
+            enm.radius = 4
+            enm.speedx = -vx;
+            enm.speedy = -vy;
+          for (var i = 0; i < 10; i++) {
+            shootEnemy();
+          }
+          cannonsound.pause();
+          cannonsound.currentTime = 0; // 再生位置をリセット
+          cannonsound.play(); // サウンドを再生
+          npc.count=0;
+          npc.speedx -= Math.cos(npc.angle)/6;
+          npc.speedy -= Math.sin(npc.angle)/6;
+        }
+        else{
+          npc.count+=1;
+        }
       }
     }
     //player移動
@@ -908,7 +969,14 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
         //player1跳ね返り
         if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
           if(player1.y + player1.radius*3/4 > blockY && player1.y < blockY + BLOCK_SIZE/4){
-            player1.speedy *= 0;
+            if(player1.speedy>0.2){
+              ishoversound=0;
+              hoversound.pause();
+              landsound.pause();
+              landsound.currentTime = 0; // 再生位置をリセット
+              landsound.play(); // サウンドを再生
+            }
+            player1.speedy = 0;
             player1.y=blockY - player1.radius*3/4;
             if(controller['KeyW'] == false){
               player1.jump1=2; 
@@ -1033,9 +1101,6 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
               rocket.y + rocket.width > blockY && rocket.y - rocket.width< blockY + BLOCK_SIZE) {
             // ブロックを破壊
             BLOCK_MATRIX[row][col] = 0;
-            breaksound.pause();
-            breaksound.currentTime = 0; // 再生位置をリセット
-            breaksound.play(); // サウンドを再生
             for (var i = 0; i < 20; i++) {
               enm.x = blockX + BLOCK_SIZE/2 + 10*Math.cos(i*Math.PI/10);
               enm.y = blockY + BLOCK_SIZE/2 + 10*Math.sin(i*Math.PI/10);
@@ -1050,6 +1115,9 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
               blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
               shootBullet();
             }
+            breaksound.pause();
+            breaksound.currentTime = 0; // 再生位置をリセット
+            breaksound.play(); // サウンドを再生
             // 弾を削除
             rockets.splice(rocketIndex, 1);
             drowMap(Matrix);
@@ -1098,6 +1166,13 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
         //player1跳ね返り
         if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
           if(player1.y + player1.radius*3/4 > blockY && player1.y < blockY + BLOCK_SIZE/4){
+            if(player1.speedy>0.2){
+              ishoversound=0;
+              hoversound.pause();
+              landsound.pause();
+              landsound.currentTime = 0; // 再生位置をリセット
+              landsound.play(); // サウンドを再生
+            }
             player1.speedy *= 0;
             player1.y=blockY - player1.radius*3/4;
             if(controller['KeyW'] == false){
@@ -1242,6 +1317,9 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
               blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
               shootBullet();
             }
+            breaksound.pause();
+            breaksound.currentTime = 0; // 再生位置をリセット
+            breaksound.play(); // サウンドを再生
             rockets.splice(rocketIndex, 1);
           }
         //for calculate process speed
@@ -1721,7 +1799,7 @@ function controll(){
       tele1.count+=1;
     }
   }
-
+  
   //move
   if(controller['KeyW'] && player1.mp>8){
     //JUMP
@@ -1773,8 +1851,17 @@ function controll(){
         bim1.speedx = Math.random()/2-1/4;
         bim1.speedy = 5;
         shootBiim1();
+      if(ishoversound==0){
+        hoversound.pause();
+        hoversound.currentTime = 0; // 再生位置をリセット
+        hoversound.play(); // サウンドを再生
+        ishoversound=1;
+      }
     }
-
+  }
+  else if(ishoversound==1){
+    ishoversound=0;
+    hoversound.pause();
   }
   if(controller['KeyS'] && player1.mp>0){
     player1.mp-=0.7;
@@ -1827,7 +1914,6 @@ function controll(){
     ctx.stroke();
     ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
   }
-
 }
 
 //for game start and restart
@@ -2053,14 +2139,14 @@ function goalin(){
   ctx.fillStyle = 'gold';
   ctx.globalAlpha = 1;
   ctx.fillText('You survived!', 150, 300);
-  ctx.fillText('↓Next stage↓', 150, 370);
+  ctx.fillText('There is more to come', 50, 370);
   ctx.fillText(player1.result, 300, 110);
   ctx.fillText(player1.taken, 300, 170);
   ctx.fillText(player1.kill, 300, 230);
-  button1.style.display = "block";
+  button2.style.display = "block";
   //clickbutton button
-  button1.onclick = function() {
-    window.location.href = 'stage2.html';
+  button2.onclick = function() {
+    window.location.href = 'stage'+(stage+1)+'.html';
   };
 }
 
@@ -2090,11 +2176,8 @@ function gameLoop() {
     drawgoal()}
 
   //ギミック
-  Rain(20);
   Rain(limit-20);
-  canon(15);
-  canon(limit/2);
-  canon(limit*3/4);
+  canon(limit-30);
 
   //text
   Text('Push [w][a][s][d] to move',0)
@@ -2102,11 +2185,6 @@ function gameLoop() {
   Text('Push Shift on the left',3)
   Text('Push [f] This is special move',4.5)
   Text('Push [f] This is special move',6)
-  Text('We dont have enough time...',8)
-  Text('Lets GO',9.5)
-  Text('→→→',11)
-  Text('you are aimed',14) 
-  Text('you are aimed Caution!',15.5) 
   
 
   //操作
@@ -2251,6 +2329,10 @@ canvas.addEventListener("mousemove", function(event) {
 });
 // EventListener for Game Start
 window.addEventListener("keydown", handleKeyPress);
+//clickbutton button
+button1.onclick = function() {
+  window.location.href = 'stage'+(stage-1)+'.html';
+};
 
     </script>
     <div class="textContainer">
@@ -2259,4 +2341,3 @@ window.addEventListener("keydown", handleKeyPress);
     </div>
   </body>
 </html>
-

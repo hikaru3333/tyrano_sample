@@ -213,7 +213,7 @@ var x_res = 0.2
 var t_count =0;
 var limit = 150;//second
 var mapX = 0;
-var t_3;
+var t_3 = 0; //回復時に使用する現在時間
 let isFunctionExecuted = true;//フラグリセット
 const controller = {};
 const BLOCK_SIZE = 39;
@@ -234,6 +234,7 @@ let rockets = [];
 let npcs = [];
 //items
 let items = [];
+
 //for calculate process speed
 var ps = 0;
 var ps_true = 0;
@@ -273,6 +274,46 @@ for (var i = 0; i < twrN; i++){
   });
 }
 
+//load sounds
+var bombsound = new Audio('sound/bomb1.mp3');
+var cannonsound = new Audio('sound/cannon2.mp3');
+var itemsound = new Audio('sound/power-up1.mp3');
+var shotsound = new Audio('sound/shot1.mp3');
+var breaksound = new Audio('sound/blow4.mp3');
+var boostsound = new Audio('sound/booster1.mp3');
+var biimsound = new Audio('sound/beamgun2.mp3');
+var warpsound = new Audio('sound/enemy-advent1.mp3');
+var rocketsound = new Audio('sound/rocket-launcher1.mp3');
+//音量調整
+bombsound.volume = 0.2;
+cannonsound.volume = 0.2;
+itemsound.volume = 0.2;
+shotsound.volume = 0.2;
+breaksound.volume = 0.2;
+boostsound.volume = 0.2;
+biimsound.volume = 0.2;
+warpsound.volume = 0.2;
+rocketsound.volume = 0.2;
+//追加：web audio APIによるサウンド　テスト
+const audio_ctx = new AudioContext();
+let audio_buffer = null;
+let audio_buffer_node = null;
+var gainNode = audio_ctx.createGain();
+(async () => {
+  const response = await fetch('sound/cannon2.mp3') // fetch で mp3 ファイルをダウンロードして ArrayBuffer を取得
+  const response_buffer = await response.arrayBuffer();
+  audio_buffer = await audio_ctx.decodeAudioData(response_buffer);// ArrayBuffer をデコードして AudioBuffer オブジェクトを取得
+  gainNode.connect(audio_ctx.destination);
+  gainNode.gain.value = 0.1;
+  prepareAudioBufferNode(); // 初回再生のために準備を行う
+})();
+// 音源再生のために準備を行う
+function prepareAudioBufferNode() {
+  audio_buffer_node = audio_ctx.createBufferSource();
+  audio_buffer_node.buffer = audio_buffer;
+  audio_buffer_node.connect(gainNode)
+  //audio_buffer_node.connect(audio_ctx.destination);
+}
 
 // ランダムなRGB値を生成する関数
 function getRandomColor() {
@@ -2079,9 +2120,9 @@ function gameLoop() {
   canon(limit/2);
 
   //text
-  Text('←←←You can +10hp',0)
-  Text('←←←You can +10hp',1.5) 
-  Text('defeat that enmey→→→',3) 
+  Text('制作中',0)
+  Text('制作中',1.5) 
+  Text('制作中',3) 
   Text('+'+addhp+'HP',t_3)
   
 
@@ -2226,7 +2267,7 @@ canvas.addEventListener("mousemove", function(event) {
 window.addEventListener("keydown", handleKeyPress);
 //clickbutton button
 button1.onclick = function() {
-  window.location.href = 'index.html';
+  window.location.href = 'stage1.html';
 };
 
     </script>

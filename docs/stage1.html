@@ -31,10 +31,10 @@
       }
       .button {
         position: absolute;
-        left: 300px;
+        left: 100px;
         top: 670px;
         transform: translate(-50%, -50%);
-        display: none;
+        display: block;
         padding: 10px;
         background-color: midnightblue;
         color: white;
@@ -45,16 +45,33 @@
       .button:hover {
         color: #2f1144;
       }
+      .button2 {
+        position: absolute;
+        left: 200px;
+        top: 670px;
+        transform: translate(-50%, -50%);
+        display: none;
+        padding: 10px;
+        background-color: purple;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: color 0.3s ease;
+      }
+      .button2:hover {
+        color: #2f1144;
+      }
     </style>
   </head>
   <body>
     <div class="stage-page">
-      <h1>Tank Survival Adventure</h1>
+      <h1>Stage 1</h1>
       <h2>[w]:↑ [a]:← [s]:↓ [d]:→</h2>
       <h2>[ShiftLeft]:SHOT BULLET</h2>
       <h2>[f]:SPECIAL MOVE</h2>
     </div>
-    <button id="button1" class="button">Go to Stage 1</button>
+    <button id="button1" class="button">Menu</button>
+    <button id="button2" class="button2">Go to Stage 2</button>
     <canvas id="gameCanvas" width="610" height="490"></canvas>
     <canvas id="backgroundCanvas" width="610" height="490"></canvas>
     <script>
@@ -67,6 +84,7 @@ const backgroundCanvas = document.getElementById('backgroundCanvas');
 const backctx = backgroundCanvas.getContext('2d');
 //get the location of button1
 var button1 = document.getElementById("button1");
+var button2 = document.getElementById("button2");
 
 //initial states
 //player1
@@ -102,7 +120,7 @@ nplayer={
   length: 15,
   jump1: 2,
   jump2: 0,
-  hp: 20,
+  hp: 30,
   mp: 100,
   headcolor: 'white',
   bodycolor: 'silver'
@@ -190,12 +208,14 @@ goal = {
 
 
 //parameters
-var gravity = 0.1
-var x_res = 0.2
+var stage = 1;
+var gravity = 0.1;
+var x_res = 0.2;
 var t_count =0;
 var limit = 150;//second
 var mapX = 0;
 var t_3 = 0; //回復時に使用する現在時間
+var ishoversound = 0;
 let isFunctionExecuted = true;//フラグリセット
 const controller = {};
 const BLOCK_SIZE = 39;
@@ -223,19 +243,19 @@ var ps_true = 0;
 
 //get map matrix ０：空白、１：破壊可、２：npc、３：item、４：goal、５：破壊不可
 const Matrix = [
-[5,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,0] ,
-[0,0,5,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,5,5,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,5,5,5,0,0] ,
-[1,5,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,5,5,5,5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,5,5,5] ,
-[5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,0,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,2,0,0,0,5,5] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,5] ,
-[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,3,0,3,0,0,1,0,0,0,0,0,0,1,1,0,0,3,0,3,0,0,1,1,0,0,0,0,0,3,0,3,0,0,0,0,0,3,0,3,0,2,1,2,0,1,1,5] ,
-[1,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,1,1,0,0,0,2,1,1,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0] ,
-[0,1,0,0,0,0,0,3,0,3,0,3,0,0,0,0,0,0,0,0,1,5,0,0,3,0,0,1,1,0,0,0,0,0,0,0,0,0,2,5,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,2,0,1,1,1,0,0,0,0,0,0,0,2,1,4,0,0,0,2] ,
-[5,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,5,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,5,1,1,1,1,1,1,1,1,0,0,1,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,2,0,0,0,1,1,0,0,0,5,1,1,1,1,1,0,0] ,
-[1,5,1,1,1,1,1,1,1,0,0,0,0,1,0,0,0,1,1,1,1,5,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,5,5,5,1,1,1,1,1,1,1,0,0,0,2,1,1,1,1,0,0,0,1,0,0,2,0,0,0,0,0,2,0,0,0,0,0,2,0,0,0,1,1,1,1,1,1,1,1,1,1,5,0,0,0,5,1,1,2,1,1,1,1] ,
-[0,0,5,5,5,5,5,5,5,5,0,0,0,0,0,0,0,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,0,0,0,5,0,0,0,0,5,5,5,5,5,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,5,0,5] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,6,1,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,6,1,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,6] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,1,4] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,1,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0] ,
+[3,0,3,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3] ,
+[1,1,5,5,5,5,5,5,5,5,1,1,1,1,1,1,1,1,1,1,5,5,5,5,5,5,1,0,0,0,0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,0,1,1,1,1,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,0,0,0,5,0,0,0,0,5,5,5,5,1,1,1,1] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] 
 ];
 //Mapの天井地面背景の準備
 let twrs=[];
@@ -266,16 +286,20 @@ var boostsound = new Audio('sound/booster1.mp3');
 var biimsound = new Audio('sound/beamgun2.mp3');
 var warpsound = new Audio('sound/enemy-advent1.mp3');
 var rocketsound = new Audio('sound/rocket-launcher1.mp3');
+var hoversound = new Audio('sound/electric-fan-high1.mp3');
+var landsound = new Audio('sound/landing1.mp3');
 //音量調整
 bombsound.volume = 0.2;
-cannonsound.volume = 0.2;
+cannonsound.volume = 0.1;
 itemsound.volume = 0.1;
-shotsound.volume = 0.2;
+shotsound.volume = 0.1;
 breaksound.volume = 0.2;
 boostsound.volume = 0.2;
 biimsound.volume = 0.2;
 warpsound.volume = 0.2;
 rocketsound.volume = 0.2;
+hoversound.volume = 0.2;
+landsound.volume = 0.2;
 //追加：web audio APIによるサウンド　テスト
 const audio_ctx = new AudioContext();
 let audio_buffer = null;
@@ -346,10 +370,6 @@ function drowMap(BLOCK_MATRIX){
         backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
       } 
       if (BLOCK_MATRIX[row][col] === 2) {
-        nplayer.x=blockX;
-        nplayer.y=blockY;
-        generateNplayer();
-        BLOCK_MATRIX[row][col] = 0;
       } 
       if (BLOCK_MATRIX[row][col] === 3) {
         backctx.globalAlpha = 0.3;
@@ -410,6 +430,11 @@ function drowMap(BLOCK_MATRIX){
         backctx.fillStyle = 'silver';
         backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
       }     
+      if (BLOCK_MATRIX[row][col] === 6){
+        backctx.globalAlpha = 0.1;
+        backctx.fillStyle = 'red';
+        backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+      }
     }
   }
   backctx.beginPath();
@@ -511,40 +536,76 @@ function drawNplayer(){
     //アルゴリズム
     var dx = Math.abs(npc.x-player1.x);
     var dy = Math.abs(npc.y-player1.y)
-    if(dx<150 && dy<500){
-      if(dx<100){
+    if(dx<300 && dy<500){
+      if(dx>150){
         npc.speedx = (player1.x-npc.x)/dx/3
       }
-      if(player1.x<npc.x){
-        npc.angle = Math.PI+Math.atan((player1.y-npc.y)/(player1.x-npc.x));
-      }
-      else{
-        npc.angle = Math.atan((player1.y-npc.y)/(player1.x-npc.x));
-      }
-      //biim
-      bim2.t = 150
-      if(npc.count>60){
-        for (var i = 0; i < 20; i++) {
-          bim2.x = npc.x + 25*Math.cos(npc.angle);
-          bim2.y = npc.y + 25*Math.sin(npc.angle);
-          bim2.radius = i/5+1
-          bim2.speedx = (i/20+2)*Math.cos(npc.angle);
-          bim2.speedy = (i/20+2)*Math.sin(npc.angle);
-          shootBiim2();
+      else if(dy>50){
+        if(player1.x<npc.x){
+          npc.angle = Math.PI+Math.atan((player1.y-npc.y)/(player1.x-npc.x));
         }
-        npc.count=0;
-        npc.speedx -= Math.cos(npc.angle)/6;
-        npc.speedy -= Math.sin(npc.angle)/6;
+        else{
+          npc.angle = Math.atan((player1.y-npc.y)/(player1.x-npc.x));
+        }
+        //biim
+        bim2.t = 150
+        if(npc.count>60){
+            bim2.x = npc.x + 25*Math.cos(npc.angle);
+            bim2.y = npc.y + 25*Math.sin(npc.angle);
+          for (var i = 0; i < 20; i++) {
+            bim2.radius = i/5+1
+            bim2.speedx = (i/20+2)*Math.cos(npc.angle);
+            bim2.speedy = (i/20+2)*Math.sin(npc.angle);
+            shootBiim2();
+          }
+          shotsound.pause();
+          shotsound.currentTime = 0; // 再生位置をリセット
+          shotsound.play(); // サウンドを再生
+          npc.count=0;
+          npc.speedx -= Math.cos(npc.angle)/6;
+          npc.speedy -= Math.sin(npc.angle)/6;
+        }
+        else{
+          npc.count+=1;
+          ctx.beginPath();
+          ctx.fillStyle = nplayer.headcolor;
+          ctx.globalAlpha = npc.count/60;
+          ctx.arc(npc.x + 25*Math.cos(npc.angle), npc.y + 25*Math.sin(npc.angle), npc.count/12, 0,Math.PI * 2);
+          ctx.fill();
+          ctx.closePath();
+          ctx.globalAlpha = 1;
+        }
       }
-      else{
-        npc.count+=1;
-        ctx.beginPath();
-        ctx.fillStyle = nplayer.headcolor;
-        ctx.globalAlpha = npc.count/60;
-        ctx.arc(npc.x + 25*Math.cos(npc.angle), npc.y + 25*Math.sin(npc.angle), npc.count/12, 0,Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-        ctx.globalAlpha = 1;
+      //cannon
+      if(dy<50){
+        var vy = 3.5;
+        var k = 71
+        var vx = (npc.x-player1.x)/k - player1.speedx/4
+        if(player1.x<npc.x){
+          npc.angle = Math.PI+Math.atan(vy/vx);
+        }
+        else{
+          npc.angle = Math.atan(vy/vx);
+        }
+        if(npc.count>60){
+            enm.x = npc.x;
+            enm.y = npc.y;
+            enm.radius = 4
+            enm.speedx = -vx;
+            enm.speedy = -vy;
+          for (var i = 0; i < 10; i++) {
+            shootEnemy();
+          }
+          cannonsound.pause();
+          cannonsound.currentTime = 0; // 再生位置をリセット
+          cannonsound.play(); // サウンドを再生
+          npc.count=0;
+          npc.speedx -= Math.cos(npc.angle)/6;
+          npc.speedy -= Math.sin(npc.angle)/6;
+        }
+        else{
+          npc.count+=1;
+        }
       }
     }
     //player移動
@@ -688,23 +749,21 @@ function drawItem(){
 
 //goalの描画
 function drawgoal(){
-  ctx.fillStyle = 'white';
-  ctx.font = '10px Arial';
-  ctx.fillText('↓HERE↓',goal.x, goal.y);
-  bim1.t = 3;
   ctx.globalAlpha = 0.2;
   ctx.fillStyle=getRandomColor();
   ctx.beginPath();
   ctx.arc(goal.x + BLOCK_SIZE/2, goal.y + BLOCK_SIZE/2, t_count%30/2, 0,Math.PI * 2);
   ctx.fill();
   ctx.closePath();
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = 'white';
+  ctx.font = '10px Arial';
+  ctx.fillText('↓HERE↓',goal.x, goal.y);
   for (var i = 0; i < 10; i++) {
-    bim1.x = goal.x + BLOCK_SIZE/2+ 15*Math.cos(t_count+i/10);
-    bim1.y = goal.y + BLOCK_SIZE/2+ 15*Math.sin(t_count+i/10);
-    bim1.radius = Math.sqrt(36/(i+1))
-    bim1.speedx = -(i+10)*Math.sin(t_count+i/10)/2;
-    bim1.speedy = (i+10)*Math.cos(t_count+i/10)/2;
-    shootBiim1();
+    ctx.beginPath();
+    ctx.arc(goal.x + BLOCK_SIZE/2 + (t_count%40/2)*Math.cos(i*Math.PI/5+t_count/10), goal.y + BLOCK_SIZE/2 + (t_count%40/2)*Math.sin(i*Math.PI/5+t_count/10), t_count%40/10, 0,Math.PI * 2);
+    ctx.fill();
+    ctx.closePath();
   }
 }
 
@@ -819,7 +878,7 @@ function canon(t){
 //generate non player
 function generateNplayer(){
   npcs.push({
-    initialx: nplayer.x-mapX,
+    initialx: nplayer.x+mapX,
     x: nplayer.x,
     y: nplayer.y,
     radius: nplayer.radius,
@@ -905,11 +964,18 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
     for (let col = 0; col < rowLength; col++) {
       const blockX = col * (BLOCK_SIZE + BLOCK_GAP) - mapX;
       const blockY = row * (BLOCK_SIZE + BLOCK_GAP);
-      if (BLOCK_MATRIX[row][col] === 1){
+      if (BLOCK_MATRIX[row][col] === 1 && blockX<canvas.width+150 && blockX>-100){
         //player1跳ね返り
         if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
           if(player1.y + player1.radius*3/4 > blockY && player1.y < blockY + BLOCK_SIZE/4){
-            player1.speedy *= 0;
+            if(player1.speedy>0.2){
+              ishoversound=0;
+              hoversound.pause();
+              landsound.pause();
+              landsound.currentTime = 0; // 再生位置をリセット
+              landsound.play(); // サウンドを再生
+            }
+            player1.speedy = 0;
             player1.y=blockY - player1.radius*3/4;
             if(controller['KeyW'] == false){
               player1.jump1=2; 
@@ -1034,9 +1100,6 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
               rocket.y + rocket.width > blockY && rocket.y - rocket.width< blockY + BLOCK_SIZE) {
             // ブロックを破壊
             BLOCK_MATRIX[row][col] = 0;
-            breaksound.pause();
-            breaksound.currentTime = 0; // 再生位置をリセット
-            breaksound.play(); // サウンドを再生
             for (var i = 0; i < 20; i++) {
               enm.x = blockX + BLOCK_SIZE/2 + 10*Math.cos(i*Math.PI/10);
               enm.y = blockY + BLOCK_SIZE/2 + 10*Math.sin(i*Math.PI/10);
@@ -1051,6 +1114,9 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
               blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
               shootBullet();
             }
+            breaksound.pause();
+            breaksound.currentTime = 0; // 再生位置をリセット
+            breaksound.play(); // サウンドを再生
             // 弾を削除
             rockets.splice(rocketIndex, 1);
             drowMap(Matrix);
@@ -1059,12 +1125,14 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
         ps++;
         });     
       }
-      if (BLOCK_MATRIX[row][col] === 2){
-        
-        //for calculate process speed
-        ps++;
+      if (BLOCK_MATRIX[row][col] === 2 && blockX<canvas.width+100 && blockX>-50){
+        nplayer.x=blockX;
+        nplayer.y=blockY;
+        generateNplayer();
+        // ブロックを変更
+        BLOCK_MATRIX[row][col] = 7;
       }
-      if (BLOCK_MATRIX[row][col] === 3){
+      if (BLOCK_MATRIX[row][col] === 3 && blockX<canvas.width+150 && blockX>-100){
         if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
           itemsound.pause();
           itemsound.currentTime = 0; // 再生位置をリセット
@@ -1087,7 +1155,7 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
         //for calculate process speed
         ps++;
       }
-      if (BLOCK_MATRIX[row][col] === 4){
+      if (BLOCK_MATRIX[row][col] === 4 && blockX<canvas.width+150 && blockX>-100){
         if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
           player1.hp=-100
           goal.n=1;
@@ -1095,10 +1163,17 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
       //for calculate process speed
       ps++;
       }
-      if (BLOCK_MATRIX[row][col] === 5){
+      if (BLOCK_MATRIX[row][col] === 5 && blockX<canvas.width+150 && blockX>-100){
         //player1跳ね返り
         if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
           if(player1.y + player1.radius*3/4 > blockY && player1.y < blockY + BLOCK_SIZE/4){
+            if(player1.speedy>0.2){
+              ishoversound=0;
+              hoversound.pause();
+              landsound.pause();
+              landsound.currentTime = 0; // 再生位置をリセット
+              landsound.play(); // サウンドを再生
+            }
             player1.speedy *= 0;
             player1.y=blockY - player1.radius*3/4;
             if(controller['KeyW'] == false){
@@ -1243,11 +1318,73 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
               blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
               shootBullet();
             }
+            breaksound.pause();
+            breaksound.currentTime = 0; // 再生位置をリセット
+            breaksound.play(); // サウンドを再生
             rockets.splice(rocketIndex, 1);
           }
         //for calculate process speed
         ps++;
         });     
+      }
+      if (BLOCK_MATRIX[row][col] === 6 && blockX<canvas.width+100 && blockX>-50){
+        if(t_count%300==0){
+          nplayer.x=blockX;
+          nplayer.y=blockY;
+          generateNplayer();
+          warpsound.pause();
+          warpsound.currentTime = 0; // 再生位置をリセット
+          warpsound.play(); // サウンドを再生
+        }
+        //Rocket
+        rockets.forEach((rocket, rocketIndex) => {
+          if (rocket.x + rocket.width > blockX && rocket.x - rocket.width< blockX + BLOCK_SIZE &&
+              rocket.y + rocket.width > blockY && rocket.y - rocket.width< blockY + BLOCK_SIZE) {
+            // ブロックを破壊
+            BLOCK_MATRIX[row][col] = 0;
+            for (var i = 0; i < 20; i++) {
+              enm.x = blockX + BLOCK_SIZE/2 + 10*Math.cos(i*Math.PI/10);
+              enm.y = blockY + BLOCK_SIZE/2 + 10*Math.sin(i*Math.PI/10);
+              enm.radius = 3
+              enm.speedx = 3*Math.cos(i*Math.PI/10);
+              enm.speedy = 3*Math.sin(i*Math.PI/10);
+              shootEnemy();
+              blt.x = blockX + BLOCK_SIZE/2;
+              blt.y = blockY + BLOCK_SIZE/2;
+              blt.radius = 3
+              blt.speedx = 3*Math.cos(i*Math.PI/10 + Math.PI/20);
+              blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
+              shootBullet();
+            }
+            breaksound.pause();
+            breaksound.currentTime = 0; // 再生位置をリセット
+            breaksound.play(); // サウンドを再生
+            // 弾を削除
+            rockets.splice(rocketIndex, 1);
+            drowMap(Matrix);
+          }
+        //for calculate process speed
+        ps++;
+        }); 
+        //Bullet
+        bullets.forEach((bullet, bulletIndex) => {
+          if (bullet.x + bullet.width > blockX && bullet.x - bullet.width< blockX + BLOCK_SIZE &&
+              bullet.y + bullet.width > blockY && bullet.y - bullet.width< blockY + BLOCK_SIZE) {
+            // 弾を削除
+            ctx.globalAlpha = 0.2;
+            ctx.fillStyle = 'red'; 
+            ctx.fillRect(bullet.x-10, bullet.y-10, 20, 20);
+            ctx.globalAlpha = 1;
+            bullets.splice(bulletIndex, 1);
+          }  
+        //for calculate process speed
+        ps++;
+        });
+
+
+      }
+      if (BLOCK_MATRIX[row][col] === 7 && (blockX>canvas.width+150 || blockX<-100)){
+        BLOCK_MATRIX[row][col] = 2;
       }
     } 
   }
@@ -1474,7 +1611,7 @@ function playerRocket(){
         npc.x = rocket.x;
         npc.y = rocket.y;
         if(npc.hp>=0){
-          npc.hp-=1;
+          npc.hp-=3;
         }
         var i = Math.random();
         bim2.x = npc.x + 15*Math.cos(2*i*Math.PI);
@@ -1722,7 +1859,7 @@ function controll(){
       tele1.count+=1;
     }
   }
-
+  
   //move
   if(controller['KeyW'] && player1.mp>8){
     //JUMP
@@ -1774,8 +1911,17 @@ function controll(){
         bim1.speedx = Math.random()/2-1/4;
         bim1.speedy = 5;
         shootBiim1();
+      if(ishoversound==0){
+        hoversound.pause();
+        hoversound.currentTime = 0; // 再生位置をリセット
+        hoversound.play(); // サウンドを再生
+        ishoversound=1;
+      }
     }
-
+  }
+  else if(ishoversound==1){
+    ishoversound=0;
+    hoversound.pause();
   }
   if(controller['KeyS'] && player1.mp>0){
     player1.mp-=0.7;
@@ -1828,7 +1974,6 @@ function controll(){
     ctx.stroke();
     ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
   }
-
 }
 
 //for game start and restart
@@ -1839,9 +1984,6 @@ function handleKeyPress(event) {
     }
   }
   if (event.code === "Space" && isFunctionExecuted) {
-    //↓消す
-    window.location.href = 'stage1.html';
-    //↑消す
     isFunctionExecuted = false; // フラグをtrue→二度実行されない
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     backctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2061,10 +2203,10 @@ function goalin(){
   ctx.fillText(player1.result, 300, 110);
   ctx.fillText(player1.taken, 300, 170);
   ctx.fillText(player1.kill, 300, 230);
-  button1.style.display = "block";
+  button2.style.display = "block";
   //clickbutton button
-  button1.onclick = function() {
-    window.location.href = 'stage2.html';
+  button2.onclick = function() {
+    window.location.href = 'stage'+(stage+1)+'.html';
   };
 }
 
@@ -2094,11 +2236,8 @@ function gameLoop() {
     drawgoal()}
 
   //ギミック
-  Rain(20);
   Rain(limit-20);
-  canon(15);
-  canon(limit/2);
-  canon(limit*3/4);
+  canon(limit-30);
 
   //text
   Text('Push [w][a][s][d] to move',0)
@@ -2106,11 +2245,6 @@ function gameLoop() {
   Text('Push Shift on the left',3)
   Text('Push [f] This is special move',4.5)
   Text('Push [f] This is special move',6)
-  Text('We dont have enough time...',8)
-  Text('Lets GO',9.5)
-  Text('→→→',11)
-  Text('you are aimed',14) 
-  Text('you are aimed Caution!',15.5) 
   
 
   //操作
@@ -2257,7 +2391,7 @@ canvas.addEventListener("mousemove", function(event) {
 window.addEventListener("keydown", handleKeyPress);
 //clickbutton button
 button1.onclick = function() {
-  window.location.href = 'stage2.html';
+  window.location.href = 'index.html';
 };
 
     </script>
@@ -2267,4 +2401,3 @@ button1.onclick = function() {
     </div>
   </body>
 </html>
-
