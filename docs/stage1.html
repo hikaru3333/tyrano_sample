@@ -120,7 +120,7 @@ nplayer={
   length: 15,
   jump1: 2,
   jump2: 0,
-  hp: 30,
+  hp: 35,
   mp: 100,
   headcolor: 'white',
   bodycolor: 'silver'
@@ -215,7 +215,8 @@ var t_count =0;
 var limit = 150;//second
 var mapX = 0;
 var t_3 = 0; //回復時に使用する現在時間
-var ishoversound = 0;
+var ishoversound = 0; //sound用
+var isfiresound = 0; //sound用
 let isFunctionExecuted = true;//フラグリセット
 const controller = {};
 const BLOCK_SIZE = 39;
@@ -253,9 +254,9 @@ const Matrix = [
 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,1,0] ,
 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0] ,
 [3,0,3,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3] ,
 [1,1,5,5,5,5,5,5,5,5,1,1,1,1,1,1,1,1,1,1,5,5,5,5,5,5,1,0,0,0,0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,0,1,1,1,1,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,0,0,0,5,0,0,0,0,5,5,5,5,1,1,1,1] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] 
+[0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,1,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0] 
 ];
 //Mapの天井地面背景の準備
 let twrs=[];
@@ -282,6 +283,7 @@ var cannonsound = new Audio('sound/cannon2.mp3');
 var itemsound = new Audio('sound/power-up1.mp3');
 var shotsound = new Audio('sound/shot1.mp3');
 var breaksound = new Audio('sound/blow4.mp3');
+var firesound = new Audio('sound/magic-flame1.mp3');
 var boostsound = new Audio('sound/booster1.mp3');
 var biimsound = new Audio('sound/beamgun2.mp3');
 var warpsound = new Audio('sound/enemy-advent1.mp3');
@@ -300,6 +302,7 @@ warpsound.volume = 0.2;
 rocketsound.volume = 0.2;
 hoversound.volume = 0.2;
 landsound.volume = 0.2;
+firesound.volume = 0.2;
 //追加：web audio APIによるサウンド　テスト
 const audio_ctx = new AudioContext();
 let audio_buffer = null;
@@ -538,7 +541,7 @@ function drawNplayer(){
     var dy = Math.abs(npc.y-player1.y)
     if(dx<300 && dy<500){
       if(dx>150){
-        npc.speedx = (player1.x-npc.x)/dx/3
+        npc.accelx = (player1.x-npc.x)/dx/10
       }
       else if(dy>50){
         if(player1.x<npc.x){
@@ -610,24 +613,18 @@ function drawNplayer(){
     }
     //player移動
     npc.initialx += npc.speedx;
+    npc.speedx += npc.accelx;
     npc.y += npc.speedy;
     mapX
     //重力
     npc.speedy += gravity;
     //抵抗
-    if(npc.speedx>0.1){
-      npc.speedx-=npc.speedx/3*x_res;
-      if(npc.speedx>5){
-        npc.speedx-=10*x_res;
-      }
+    if(npc.speedx>0.3){
+      npc.speedx*=0.8
     }
-    else if(npc.speedx<-0.1){
-      if(npc.speedx<-5){
-        npc.speedx+=10*x_res;
-      }
-      npc.speedx-=npc.speedx/3*x_res;
+    else if(npc.speedx<-0.3){
+      npc.speedx*=0.8;
     }
-    else{npc.speedx=0}
   return npc.x > -10 && npc.x < 4000 && npc.y > -10 && npc.y < canvas.height+10;
   });
 }
@@ -884,6 +881,7 @@ function generateNplayer(){
     radius: nplayer.radius,
     speedx: nplayer.speedx,
     speedy: nplayer.speedy,
+    accelx: 0,
     hp: nplayer.hp,
     count: 0,
     angle: 0
@@ -1924,18 +1922,50 @@ function controll(){
     hoversound.pause();
   }
   if(controller['KeyS'] && player1.mp>0){
-    player1.mp-=0.7;
+    player1.mp-=1.5;
     player1.y += 1;
     player1.speedy += 1/4;
     bim1.t = 2;
-    for (var i = 0; i < 20; i++) {
-      bim1.x = player1.x + 15*Math.cos(t_count+i/10);
-      bim1.y = player1.y + 15*Math.sin(t_count+i/10);
-      bim1.radius = Math.sqrt(36/(i+1))
-      bim1.speedx = -(i+10)*Math.sin(t_count+i/10)/10;
-      bim1.speedy = (i+10)*Math.cos(t_count+i/10)/10;
-      shootBiim1();
+    if(isfiresound==0){
+      firesound.pause();
+      firesound.currentTime = 0; // 再生位置をリセット
+      firesound.play(); // サウンドを再生
+      isfiresound=1;
     }
+    if(player1.type==0){
+      for (var i = 0; i < 20; i++) {
+        bim1.x = player1.x + 17*Math.cos(t_count*Math.PI/4);
+        bim1.y = player1.y + 9 + 7*Math.sin(t_count*Math.PI/4);
+        bim1.radius = Math.sqrt(20/(i+1))
+        bim1.speedx = Math.random()-1/2;
+        bim1.speedy = -i/2;
+        shootBiim1();
+      }
+    }
+    else if(player1.type==1){
+      for (var i = 0; i < 20; i++) {
+        bim1.x = player1.x + 17*Math.cos(t_count*Math.PI);
+        bim1.y = player1.y + 9;
+        bim1.radius = Math.sqrt(20/(i+1))
+        bim1.speedx = Math.random()-1/2;
+        bim1.speedy = -i/2;
+        shootBiim1();
+      }
+    }
+    else{
+      for (var i = 0; i < 20; i++) {
+        bim1.x = player1.x + 15*Math.cos(t_count+i/10);
+        bim1.y = player1.y + 15*Math.sin(t_count+i/10);
+        bim1.radius = Math.sqrt(36/(i+1))
+        bim1.speedx = -(i+10)*Math.sin(t_count+i/10)/10;
+        bim1.speedy = (i+10)*Math.cos(t_count+i/10)/10;
+        shootBiim1();
+      }
+    }
+  }
+  else if(isfiresound==1){
+    isfiresound=0;
+    firesound.pause();
   }
   if(controller['KeyD'] && player1.mp>0){
     player1.mp-=0.3;
@@ -2022,7 +2052,7 @@ function superbullet(){
 }
 function shield(){
   if(player1.mp>0){
-    if(blt.count>60 && player1.mp>30){
+    if(blt.count>60 && player1.mp>50){
       bombsound.pause();
       bombsound.currentTime = 0; // 再生位置をリセット
       bombsound.play(); // サウンドを再生
@@ -2037,7 +2067,19 @@ function shield(){
       }
       player1.speedy -= 1;
       blt.count=0; 
-      player1.mp-=30; 
+      player1.mp-=50; 
+      //斥力
+      npcs.forEach((npc, npcIndex) => {
+        dx= npc.x-player1.x
+        dy= npc.y-player1.y
+        d2=dx**2+dy**2
+        npc.speedx = 500*dx/d2;
+        npc.speedy = 500*dy/d2;
+        //damage
+        npc.hp-=30000/d2
+        //for calculate process speed
+        ps++;
+      });
     }
   }
 }
