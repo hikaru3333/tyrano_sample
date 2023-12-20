@@ -88,8 +88,8 @@ const menuctx = menuCanvas.getContext('2d');
 var button1 = document.getElementById("button1");
 var button2 = document.getElementById("button2");
 
-//※アイテム取得時のログ
-//メニュー欄　ポーズ　過去ログ　システム選択　
+//※アイテム取得時のログ　過去ログ　システム選択　
+//※ブロックにlist作ってそれぞれのhpをgenerateMapで格納し、hp=0で壊れる
 
 //initial states
 //player1
@@ -204,7 +204,7 @@ rkt = {
   count1: 0,
   count2: 0,
   damage: 40,
-  delay: 50 
+  delay: 60 
 }
 //teleport
 tele1 = {
@@ -230,13 +230,12 @@ x2 : []
 }
 //goal
 goal = {
-  x:0,
+  x:-100,
   y:0,
   n:0
 }
 //mine : 準備中
-mine = {
-  initialx: 0,
+min = {
   x: 0,
   y: 0,
   damage: 50,
@@ -266,18 +265,14 @@ const addhp = 10; //回復　未実装
 
 // 弾幕の配列を初期化
 let bullets = [];
-//敵
 let enemys = [];
-//biim1
 let biim1s =[];
-//biim2
 let biim2s =[];
-//rocket
 let rockets = [];
-//non player
 let npcs = [];
-//items
 let items = [];
+let mines = [];
+
 
 //for calculate process speed
 var ps = 0;
@@ -416,55 +411,55 @@ function drowMap(BLOCK_MATRIX){
     for (let col = 0; col < BLOCK_MATRIX[0].length; col++) {
       const blockX = col * (BLOCK_SIZE + BLOCK_GAP) - mapX;
       const blockY = row * (BLOCK_SIZE + BLOCK_GAP);
-      if (BLOCK_MATRIX[row][col] === 1 && blockX<canvas.width+50 && blockX>-50) {
-        backctx.globalAlpha = 1;
-        backctx.fillStyle = 'gray';
-        backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
-      } 
-      if (BLOCK_MATRIX[row][col] === 2) {
-      } 
-      if (BLOCK_MATRIX[row][col] === 3 && blockX<canvas.width+50 && blockX>-50) {
-        backctx.globalAlpha = 0.4;
-        backctx.fillStyle = 'gray';
-        backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
-        //tank
-        backctx.fillStyle = 'gray';
-        backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
-        backctx.fillStyle = 'silver';
-        backctx.fillRect(blockX-player1.radius/4+BLOCK_SIZE/2, blockY-player1.radius/4+BLOCK_SIZE/2, player1.radius/2, player1.radius/2);
-        backctx.fillStyle = 'gray';
-        backctx.fillRect(blockX-player1.radius*3/4+BLOCK_SIZE/2, blockY+player1.radius/4+BLOCK_SIZE/2, player1.radius*3/2, player1.radius/2);
-        //canond
-        backctx.beginPath();
-        backctx.moveTo(blockX+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
-        backctx.lineTo(blockX + player1.length+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
-        backctx.stroke();
-        //a,b,c
-        backctx.globalAlpha = 1;
-        backctx.fillStyle = 'white';
-        backctx.font = '24px Arial';
-        if(player1.type === 0){
-          backctx.fillText('a', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
-        }
-        else if(player1.type === 1){
-          backctx.fillText('b', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
-        }
-        else if(player1.type === 2){
-          backctx.fillText('c', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
-        }
-      } 
-      if (BLOCK_MATRIX[row][col] === 4) {
-        goal.x=blockX; goal.y=blockY;
-      } 
-      if (BLOCK_MATRIX[row][col] === 5 && blockX<canvas.width+50 && blockX>-50) {
-        backctx.globalAlpha = 1;
-        backctx.fillStyle = 'silver';
-        backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
-      }     
-      if (BLOCK_MATRIX[row][col] === 6 && blockX<canvas.width+50 && blockX>-50) {
+      if(blockX>-50 && blockY<canvas.width+50){
+        if (BLOCK_MATRIX[row][col] === 1 && blockX<canvas.width+50 && blockX>-50) {
+          backctx.globalAlpha = 1;
+          backctx.fillStyle = 'gray';
+          backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+        } 
+        if (BLOCK_MATRIX[row][col] === 3 && blockX<canvas.width+50 && blockX>-50) {
+          backctx.globalAlpha = 0.4;
+          backctx.fillStyle = 'gray';
+          backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+          //tank
+          backctx.fillStyle = 'gray';
+          backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+          backctx.fillStyle = 'silver';
+          backctx.fillRect(blockX-player1.radius/4+BLOCK_SIZE/2, blockY-player1.radius/4+BLOCK_SIZE/2, player1.radius/2, player1.radius/2);
+          backctx.fillStyle = 'gray';
+          backctx.fillRect(blockX-player1.radius*3/4+BLOCK_SIZE/2, blockY+player1.radius/4+BLOCK_SIZE/2, player1.radius*3/2, player1.radius/2);
+          //canond
+          backctx.beginPath();
+          backctx.moveTo(blockX+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
+          backctx.lineTo(blockX + player1.length+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
+          backctx.stroke();
+          //type
+          backctx.globalAlpha = 1;
+          backctx.fillStyle = 'white';
+          backctx.font = '24px Arial';
+          if(player1.type === 0){
+            backctx.fillText('1', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
+          }
+          else if(player1.type === 1){
+            backctx.fillText('2', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
+          }
+          else if(player1.type === 2){
+            backctx.fillText('3', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
+          }
+          else{
+            backctx.fillText('人', blockX+BLOCK_SIZE/4, blockY+BLOCK_SIZE/3*2);
+          }
+        } 
+        if (BLOCK_MATRIX[row][col] === 5 && blockX<canvas.width+50 && blockX>-50) {
+          backctx.globalAlpha = 1;
+          backctx.fillStyle = 'silver';
+          backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+        }     
+        if (BLOCK_MATRIX[row][col] === 6 && blockX<canvas.width+50 && blockX>-50) {
         backctx.globalAlpha = 0.1;
         backctx.fillStyle = 'red';
         backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+      }
       }
     }
   }
@@ -474,7 +469,7 @@ function drowMap(BLOCK_MATRIX){
   backctx.fill();
 }
 
-//Player描写と動作
+//描写と動作とnpc動作アルゴリズム
 function drawPlayers(){
   //back of hp, mp
   ctx.globalAlpha = 1/4;
@@ -530,12 +525,35 @@ function drawPlayers(){
     ctx.closePath();
     ctx.stroke();
     //gun
-    ctx.strokeStyle = "black";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(player1.x+Math.cos(player1.angle+0.2)*7, player1.y+2+Math.sin(player1.angle+0.2)*6);
-    ctx.lineTo(player1.x+Math.cos(player1.angle-0.2)*7, player1.y+2+Math.sin(player1.angle-0.2)*6);
-    ctx.lineTo(player1.x+Math.cos(player1.angle-0.1)*11, player1.y+2+Math.sin(player1.angle-0.1)*10);
+    if(player1.grade==1){
+      ctx.strokeStyle = "black";
+      ctx.moveTo(player1.x+Math.cos(player1.angle+0.2)*7, player1.y+2+Math.sin(player1.angle+0.2)*6);
+      ctx.lineTo(player1.x+Math.cos(player1.angle-0.2)*7, player1.y+2+Math.sin(player1.angle-0.2)*6);
+      ctx.lineTo(player1.x+Math.cos(player1.angle-0.1)*11, player1.y+2+Math.sin(player1.angle-0.1)*10);
+    }
+    else if(player1.grade==2){
+      ctx.strokeStyle = "black";
+      ctx.moveTo(player1.x+Math.cos(player1.angle-0.1)*10, player1.y+2+Math.sin(player1.angle-0.1)*9);
+      ctx.lineTo(player1.x+Math.cos(player1.angle+0.2)*7, player1.y+2+Math.sin(player1.angle+0.2)*6);
+      ctx.lineTo(player1.x+Math.cos(player1.angle-0.2)*7, player1.y+2+Math.sin(player1.angle-0.2)*6);
+      ctx.lineTo(player1.x+Math.cos(player1.angle-0.08)*14, player1.y+2+Math.sin(player1.angle-0.08)*13);
+    }
+    else{
+      ctx.strokeStyle = "red";
+      ctx.moveTo(player1.x+1, player1.y-2);
+      ctx.lineTo(player1.x+1.5, player1.y-2);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.strokeStyle = `rgb(${player1.grade*10},0,0)`;
+      ctx.moveTo(player1.x+Math.cos(player1.angle-0.1)*10, player1.y+2+Math.sin(player1.angle-0.1)*9);
+      ctx.lineTo(player1.x+Math.cos(player1.angle+0.2)*7, player1.y+2+Math.sin(player1.angle+0.2)*6);
+      ctx.lineTo(player1.x+Math.cos(player1.angle-0.2)*7, player1.y+2+Math.sin(player1.angle-0.2)*6);
+      ctx.lineTo(player1.x+Math.cos(player1.angle-0.08)*14, player1.y+2+Math.sin(player1.angle-0.08)*13);
+      ctx.lineTo(player1.x+Math.cos(player1.angle+0.1)*11, player1.y+2+Math.sin(player1.angle+0.1)*10);
+    }
     ctx.closePath();
     ctx.stroke();
     //hand
@@ -569,12 +587,13 @@ function drawPlayers(){
         ctx.arc(player1.x, player1.y, 4, 0,Math.PI * 2);
         ctx.fill();
         ctx.closePath();
-        ctx.strokeStyle = `rgb(${blt.damage*30},50,50)`
+        ctx.strokeStyle = `rgb(100,50,50)`
         ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.moveTo(player1.x, player1.y);
         ctx.lineTo(player1.x + Math.cos(player1.angle) * player1.length*0.8, player1.y + Math.sin(player1.angle) * player1.length*0.8);
         ctx.stroke();
+        ctx.strokeStyle = `black`
       }
       else if(player1.grade==3){
         ctx.beginPath();
@@ -582,7 +601,7 @@ function drawPlayers(){
         ctx.fill();
         ctx.closePath();
         ctx.stroke();
-        ctx.strokeStyle = `rgb(${blt.damage*30},0,50)`
+        ctx.strokeStyle = `rgb(30,0,0)`
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(player1.x -Math.sin(player1.angle)*2.5, player1.y +Math.cos(player1.angle)*2.5);
@@ -595,7 +614,7 @@ function drawPlayers(){
         ctx.fill();
         ctx.closePath();
         ctx.stroke();
-        ctx.strokeStyle = `rgb(${blt.damage*30},0,50)`
+        ctx.strokeStyle = `rgb(${player1.grade*10},0,0)`
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         sin=Math.sin(player1.angle)*2.5;
@@ -612,7 +631,6 @@ function drawPlayers(){
       }
     }
     ctx.lineWidth = 1.5;
-    ctx.strokeStyle = `rgb(${blt.damage*30},0,0)`
     ctx.beginPath();
     ctx.moveTo(player1.x, player1.y);
     ctx.lineTo(player1.x + Math.cos(player1.angle) * player1.length, player1.y + Math.sin(player1.angle) * player1.length);
@@ -674,7 +692,6 @@ function drawPlayers(){
   //for calculate process speed
   ps++;
 }
-//npc描写と動作とアルゴリズム
 function drawNplayer(){
   npcs.forEach(npc => {
     npc.x=npc.initialx-mapX
@@ -799,7 +816,6 @@ function drawNplayer(){
   return npc.x > -10 && npc.x < 4000 && npc.y > -10 && npc.y < canvas.height+10;
   });
 }
-// 弾幕を描画と動作
 function drawBullet(){
   ctx.fillStyle = player1.headcolor;
   ctx.globalAlpha = 0.2;
@@ -822,7 +838,6 @@ function drawBullet(){
   return bullet.x > -30 && bullet.x < canvas.width+30 && bullet.y > 0 && bullet.y < canvas.height;
   }); 
 }
-//enemy描画と動作
 function drawEnemy(){
   ctx.fillStyle = nplayer.headcolor;
     ctx.globalAlpha = 0.2;
@@ -845,7 +860,6 @@ function drawEnemy(){
   return enemy.x > 0 && enemy.x < canvas.width && enemy.y > 0 && enemy.y < canvas.height;
   }); 
 }
-//biim描画と動作
 function drawBiim(){
   ctx.fillStyle = player1.headcolor;
   ctx.globalAlpha = 0.2;
@@ -882,7 +896,6 @@ function drawBiim(){
     return biim2.x > 0 && biim2.x < canvas.width+10 && biim2.y > 0 && biim2.y < canvas.height;
   });
 }
-//rocket描画と動作
 function drawRocket(){
   ctx.fillStyle = 'gray'; 
   ctx.globalAlpha = 0.4; 
@@ -890,13 +903,13 @@ function drawRocket(){
   rockets.forEach(rocket => {
     rocket.x=rocket.initialx-mapX;
     ctx.moveTo(rocket.x,rocket.y);
-    ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle) ,rocket.y-2*rocket.width*Math.sin(rocket.angle));
-    ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle+Math.PI/6) ,rocket.y-2*rocket.width*Math.sin(rocket.angle+Math.PI/6));
-    ctx.lineTo(rocket.x+2*rocket.width*Math.cos(rocket.angle-Math.PI/6) ,rocket.y+2*rocket.width*Math.sin(rocket.angle-Math.PI/6));
-    ctx.lineTo(rocket.x+3*rocket.width*Math.cos(rocket.angle) ,rocket.y+3*rocket.width*Math.sin(rocket.angle));
-    ctx.lineTo(rocket.x+2*rocket.width*Math.cos(rocket.angle+Math.PI/6) ,rocket.y+2*rocket.width*Math.sin(rocket.angle+Math.PI/6));
-    ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle-Math.PI/6) ,rocket.y-2*rocket.width*Math.sin(rocket.angle-Math.PI/6));
-    ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle) ,rocket.y-2*rocket.width*Math.sin(rocket.angle));
+    ctx.lineTo(rocket.x-2*rkt.radius*Math.cos(rocket.angle) ,rocket.y-2*rkt.radius*Math.sin(rocket.angle));
+    ctx.lineTo(rocket.x-2*rkt.radius*Math.cos(rocket.angle+Math.PI/6) ,rocket.y-2*rkt.radius*Math.sin(rocket.angle+Math.PI/6));
+    ctx.lineTo(rocket.x+2*rkt.radius*Math.cos(rocket.angle-Math.PI/6) ,rocket.y+2*rkt.radius*Math.sin(rocket.angle-Math.PI/6));
+    ctx.lineTo(rocket.x+3*rkt.radius*Math.cos(rocket.angle) ,rocket.y+3*rkt.radius*Math.sin(rocket.angle));
+    ctx.lineTo(rocket.x+2*rkt.radius*Math.cos(rocket.angle+Math.PI/6) ,rocket.y+2*rkt.radius*Math.sin(rocket.angle+Math.PI/6));
+    ctx.lineTo(rocket.x-2*rkt.radius*Math.cos(rocket.angle-Math.PI/6) ,rocket.y-2*rkt.radius*Math.sin(rocket.angle-Math.PI/6));
+    ctx.lineTo(rocket.x-2*rkt.radius*Math.cos(rocket.angle) ,rocket.y-2*rkt.radius*Math.sin(rocket.angle));
     ctx.closePath();
     ctx.fill();
     ctx.stroke()
@@ -912,7 +925,6 @@ function drawRocket(){
   return rocket.x > -100 && rocket.x < canvas.width+100 && rocket.y > -100 && rocket.y < canvas.height+100;
   }); 
 }
-//item描画と動作
 function drawItem(){
   //描画
   items.forEach(item => {
@@ -957,6 +969,26 @@ function drawItem(){
   return item.x > -100 && item.x < canvas.width+100 && item.y > -100 && item.y < canvas.height+100;
   }); 
 }
+function drawMine(){
+  //描画
+  mines.forEach(mine => {
+    mine.x=mine.initialx-mapX;
+    ctx.globalAlpha = 0.6;
+    ctx.beginPath();
+    ctx.fillStyle = 'black';
+    ctx.arc(mine.x, mine.y, 5, Math.PI, 0);
+    ctx.fill();
+    ctx.closePath();
+  });
+  // 移動と削除
+  mines = mines.filter(mine => {
+    //for calculate process speed
+    ps++;
+    //画面外ループしない
+  return mine.x > -100 && mine.x < canvas.width+100 && mine.y > -100 && mine.y < canvas.height+100;
+  }); 
+}
+
 //goalの描画
 function drawgoal(){
   ctx.globalAlpha = 0.2;
@@ -978,6 +1010,7 @@ function drawgoal(){
     ps++;
   }
 }
+
 
 //ギミック
 function Rain(t){  
@@ -1118,7 +1151,7 @@ function generateItem(){
     count: itm.count
   });
 }
-//shoot
+//shoot 弾等の生成
 function shootBullet(){            
   bullets.push({
     initialx:blt.x+mapX,
@@ -1166,11 +1199,17 @@ function shootRocket(){
     initialx:rkt.x+mapX,
     x: rkt.x,
     y: rkt.y,
-    width: rkt.radius,
     speedX: rkt.speedx,
     speedY: rkt.speedy,
     angle: rkt.angle,
-    hp: 40
+    hp: 20
+  })};
+function shootMine(){
+  mines.push({
+    initialx: min.x+mapX,
+    x: min.x,
+    y: min.y,
+    hp: 0
   })};
 
 //跳ね返りblock player当たり判定
@@ -1180,440 +1219,446 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
     for (let col = 0; col < rowLength; col++) {
       const blockX = col * (BLOCK_SIZE + BLOCK_GAP) - mapX;
       const blockY = row * (BLOCK_SIZE + BLOCK_GAP);
-      if (BLOCK_MATRIX[row][col] === 1 && blockX<canvas.width+150 && blockX>-100){
-        //player1跳ね返り
-        if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
-          if(player1.y + player1.radius*3/4 > blockY && player1.y < blockY + BLOCK_SIZE/4){
-            if(player1.speedy>0.2){
-              ishoversound=0;
-              hoversound.pause();
-              landsound.pause();
-              landsound.currentTime = 0; // 再生位置をリセット
-              landsound.play(); // サウンドを再生
-            }
-            player1.speedy = 0;
-            player1.y=blockY - player1.radius*3/4;
-            if(controller['KeyW'] == false){
-              player1.jump1=2; 
-              player1.jump2=0;
-            }
-          }
-        }//地面
-        if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
-          if(player1.y > blockY && player1.y - player1.radius/4 < blockY + BLOCK_SIZE){
-            player1.speedy = (blockY + BLOCK_SIZE - player1.y + player1.radius/4)*1;
-          }
-        }//天井
-        if(player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
-          if(player1.x + player1.radius/2 > blockX && player1.x < blockX + BLOCK_SIZE/3){
-            player1.speedx *= -0.8;
-            player1.x=blockX - player1.radius/2;
-          }     
-        }//左
-        if(player1.y + player1.radius/2> blockY && player1.y < blockY + BLOCK_SIZE){
-          if(player1.x > blockX + BLOCK_SIZE*2/3 && player1.x - player1.radius/2 < blockX + BLOCK_SIZE){
-            player1.speedx *= -0.8;
-            player1.x=blockX + BLOCK_SIZE + player1.radius/2;
-          }     
-        }//右       
-        //for calculate process speed
-        ps++;
-        //npc跳ね返り
-        npcs.forEach((npc, npcIndex) => {
-          if(npc.x + npc.radius/4 > blockX && npc.x - npc.radius/4< blockX + BLOCK_SIZE){
-            if(npc.y + npc.radius*3/4 > blockY && npc.y < blockY + BLOCK_SIZE/4){
-              npc.speedy *= 0;
-              npc.y=blockY - npc.radius*3/4;
-              if(controller['ArrowUp'] == false){
-                npc.jump1=2; 
-                npc.jump2=0;
+      if(blockX>-150 && blockY<canvas.width+150){
+        if (BLOCK_MATRIX[row][col] === 1 && blockX<canvas.width+150 && blockX>-100){
+          //player1跳ね返り
+          if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
+            if(player1.y + player1.radius*3/4 > blockY && player1.y < blockY + BLOCK_SIZE/4){
+              if(player1.speedy>0.2){
+                ishoversound=0;
+                hoversound.pause();
+                landsound.pause();
+                landsound.currentTime = 0; // 再生位置をリセット
+                landsound.play(); // サウンドを再生
+              }
+              player1.speedy = 0;
+              player1.y=blockY - player1.radius*3/4;
+              if(controller['KeyW'] == false){
+                player1.jump1=2; 
+                player1.jump2=0;
               }
             }
           }//地面
-          if(npc.x + npc.radius/4 > blockX && npc.x - npc.radius/4< blockX + BLOCK_SIZE){
-            if(npc.y > blockY && npc.y - npc.radius/4 < blockY + BLOCK_SIZE){
-              npc.speedy = (blockY + BLOCK_SIZE - npc.y + npc.radius/4)*1;
+          if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
+            if(player1.y > blockY && player1.y - player1.radius/4 < blockY + BLOCK_SIZE){
+              player1.speedy = (blockY + BLOCK_SIZE - player1.y + player1.radius/4)*1;
             }
           }//天井
-          if(npc.y + npc.radius/2 > blockY && npc.y < blockY + BLOCK_SIZE){
-            if(npc.x + npc.radius/2 > blockX && npc.x < blockX + BLOCK_SIZE/3){
-              npc.speedx *= -0.8;
-              npc.initialx=npc.initialx-1;
+          if(player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
+            if(player1.x + player1.radius/2 > blockX && player1.x < blockX + BLOCK_SIZE/3){
+              player1.speedx *= -0.8;
+              player1.x=blockX - player1.radius/2;
             }     
           }//左
-          if(npc.y + npc.radius/2> blockY && npc.y < blockY + BLOCK_SIZE){
-            if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
-              npc.speedx *= -0.8;
-              npc.initialx=npc.initialx+1;
+          if(player1.y + player1.radius/2> blockY && player1.y < blockY + BLOCK_SIZE){
+            if(player1.x > blockX + BLOCK_SIZE*2/3 && player1.x - player1.radius/2 < blockX + BLOCK_SIZE){
+              player1.speedx *= -0.8;
+              player1.x=blockX + BLOCK_SIZE + player1.radius/2;
             }     
-          }//右
+          }//右       
           //for calculate process speed
           ps++;
-        });   
-        //Bullet
-        bullets.forEach((bullet, bulletIndex) => {
-          if(bullet.x + bullet.width/4 > blockX && bullet.x - bullet.width/4< blockX + BLOCK_SIZE){
-          if(bullet.y + bullet.width > blockY && bullet.y < blockY + BLOCK_SIZE/4){
-            bullet.speedY *= -1;
-            bullet.y=blockY - bullet.width;
-          }
-          }//地面
-          if(bullet.x- bullet.speedX/2 > blockX && bullet.x - bullet.speedX/2< blockX + BLOCK_SIZE){
-            if(bullet.y > blockY && bullet.y - bullet.width < blockY + BLOCK_SIZE){
-              bullet.speedY = (blockY + BLOCK_SIZE - bullet.y + bullet.width)*1;
+          //npc跳ね返り
+          npcs.forEach((npc, npcIndex) => {
+            if(npc.x>-100 && npc.x<canvas.width+100){
+              if(npc.x + npc.radius/4 > blockX && npc.x - npc.radius/4< blockX + BLOCK_SIZE){
+                if(npc.y + npc.radius*3/4 > blockY && npc.y < blockY + BLOCK_SIZE/4){
+                  npc.speedy *= 0;
+                  npc.y=blockY - npc.radius*3/4;
+                  if(controller['ArrowUp'] == false){
+                    npc.jump1=2; 
+                    npc.jump2=0;
+                  }
+                }
+              }//地面
+              if(npc.x + npc.radius/4 > blockX && npc.x - npc.radius/4< blockX + BLOCK_SIZE){
+                if(npc.y > blockY && npc.y - npc.radius/4 < blockY + BLOCK_SIZE){
+                  npc.speedy = (blockY + BLOCK_SIZE - npc.y + npc.radius/4)*1;
+                }
+              }//天井
+              if(npc.y + npc.radius/2 > blockY && npc.y < blockY + BLOCK_SIZE){
+                if(npc.x + npc.radius/2 > blockX && npc.x < blockX + BLOCK_SIZE/3){
+                  npc.speedx *= -0.8;
+                  npc.initialx=npc.initialx-1;
+                }     
+              }//左
+              if(npc.y + npc.radius/2> blockY && npc.y < blockY + BLOCK_SIZE){
+                if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
+                  npc.speedx *= -0.8;
+                  npc.initialx=npc.initialx+1;
+                }     
+              }//右
+              //for calculate process speed
+              ps++;
             }
-          }//天井
-          if(bullet.y + bullet.width*3/4 > blockY && bullet.y - bullet.width*3/4 < blockY + BLOCK_SIZE){
-            if(bullet.x + bullet.speedX > blockX && bullet.x < blockX + BLOCK_SIZE/3){
-              bullet.speedX *= -1;
-              bullet.x=blockX - bullet.width;
-            }     
-          }//左
-          if(bullet.y + bullet.width*3/4> blockY && bullet.y - bullet.width*3/4 < blockY + BLOCK_SIZE){
-            if(bullet.x > blockX + BLOCK_SIZE*2/3 && bullet.x + bullet.speedX < blockX + BLOCK_SIZE){
-              bullet.speedX *= -1;
-              bullet.x=blockX + BLOCK_SIZE + bullet.width;
-            }     
-          }//右  
-        //for calculate process speed
-        ps++;
-        });
-        //Enemy
-        enemys.forEach((enemy, enemyIndex) => {
-          if(enemy.x + enemy.width/4 > blockX && enemy.x - enemy.width/4< blockX + BLOCK_SIZE){
-          if(enemy.y + enemy.width > blockY && enemy.y < blockY + BLOCK_SIZE/4){
-            enemy.speedY *= -1;
-            enemy.y=blockY - enemy.width;
-          }
-          }//地面
-          if(enemy.x- enemy.speedX/2 > blockX && enemy.x - enemy.speedX/2< blockX + BLOCK_SIZE){
-            if(enemy.y > blockY && enemy.y - enemy.width < blockY + BLOCK_SIZE){
-              enemy.speedY = (blockY + BLOCK_SIZE - enemy.y + enemy.width)*1;
+          });   
+          //Bullet
+          bullets.forEach((bullet, bulletIndex) => {
+            if(bullet.x + bullet.width/4 > blockX && bullet.x - bullet.width/4< blockX + BLOCK_SIZE){
+            if(bullet.y + bullet.width > blockY && bullet.y < blockY + BLOCK_SIZE/4){
+              bullet.speedY *= -1;
+              bullet.y=blockY - bullet.width;
             }
-          }//天井
-          if(enemy.y + enemy.width*3/4 > blockY && enemy.y - enemy.width*3/4 < blockY + BLOCK_SIZE){
-            if(enemy.x + enemy.speedX > blockX && enemy.x < blockX + BLOCK_SIZE/3){
-              enemy.speedX *= -1;
-              enemy.x=blockX - enemy.width;
-            }     
-          }//左
-          if(enemy.y + enemy.width*3/4> blockY && enemy.y - enemy.width*3/4 < blockY + BLOCK_SIZE){
-            if(enemy.x > blockX + BLOCK_SIZE*2/3 && enemy.x + enemy.speedX < blockX + BLOCK_SIZE){
-              enemy.speedX *= -1;
-              enemy.x=blockX + BLOCK_SIZE + enemy.width;
-            }     
-          }//右   
-        //for calculate process speed
-        ps++;
-        });
-        //Rocket
-        rockets.forEach((rocket, rocketIndex) => {
-          if (rocket.x + rocket.width > blockX && rocket.x - rocket.width< blockX + BLOCK_SIZE &&
-              rocket.y + rocket.width > blockY && rocket.y - rocket.width< blockY + BLOCK_SIZE) {
-            // ブロックを破壊
-            BLOCK_MATRIX[row][col] = 8;
-            for (var i = 0; i < 20; i++) {
-              enm.x = blockX + BLOCK_SIZE/2 + 10*Math.cos(i*Math.PI/10);
-              enm.y = blockY + BLOCK_SIZE/2 + 10*Math.sin(i*Math.PI/10);
-              enm.radius = 3
-              enm.speedx = 3*Math.cos(i*Math.PI/10);
-              enm.speedy = 3*Math.sin(i*Math.PI/10);
-              shootEnemy();
-              blt.x = blockX + BLOCK_SIZE/2;
-              blt.y = blockY + BLOCK_SIZE/2;
-              blt.radius = 3
-              blt.speedx = 3*Math.cos(i*Math.PI/10 + Math.PI/20);
-              blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
-              shootBullet();
+            }//地面
+            if(bullet.x- bullet.speedX/2 > blockX && bullet.x - bullet.speedX/2< blockX + BLOCK_SIZE){
+              if(bullet.y > blockY && bullet.y - bullet.width < blockY + BLOCK_SIZE){
+                bullet.speedY = (blockY + BLOCK_SIZE - bullet.y + bullet.width)*1;
+              }
+            }//天井
+            if(bullet.y + bullet.width*3/4 > blockY && bullet.y - bullet.width*3/4 < blockY + BLOCK_SIZE){
+              if(bullet.x + bullet.speedX > blockX && bullet.x < blockX + BLOCK_SIZE/3){
+                bullet.speedX *= -1;
+                bullet.x=blockX - bullet.width;
+              }     
+            }//左
+            if(bullet.y + bullet.width*3/4> blockY && bullet.y - bullet.width*3/4 < blockY + BLOCK_SIZE){
+              if(bullet.x > blockX + BLOCK_SIZE*2/3 && bullet.x + bullet.speedX < blockX + BLOCK_SIZE){
+                bullet.speedX *= -1;
+                bullet.x=blockX + BLOCK_SIZE + bullet.width;
+              }     
+            }//右  
+          //for calculate process speed
+          ps++;
+          });
+          //Enemy
+          enemys.forEach((enemy, enemyIndex) => {
+            if(enemy.x + enemy.width/4 > blockX && enemy.x - enemy.width/4< blockX + BLOCK_SIZE){
+            if(enemy.y + enemy.width > blockY && enemy.y < blockY + BLOCK_SIZE/4){
+              enemy.speedY *= -1;
+              enemy.y=blockY - enemy.width;
             }
-            breaksound.pause();
-            breaksound.currentTime = 0; // 再生位置をリセット
-            breaksound.play(); // サウンドを再生
-            // 弾を削除
-            rockets.splice(rocketIndex, 1);
-            drowMap(Matrix);
-          }
-        //for calculate process speed
-        ps++;
-        });     
-      }
-      if (BLOCK_MATRIX[row][col] === 2 && blockX<canvas.width+100 && blockX>-50){
-        nplayer.x=blockX;
-        nplayer.y=blockY;
-        generateNplayer();
-        // ブロックを変更
-        BLOCK_MATRIX[row][col] = 7;
-      }
-      if (BLOCK_MATRIX[row][col] === 3 && blockX<canvas.width+150 && blockX>-100){
-        if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
-          itemsound.pause();
-          itemsound.currentTime = 0; // 再生位置をリセット
-          itemsound.play(); // サウンドを再生
-          //erase block
-          BLOCK_MATRIX[row][col] = 0;
-          //map redraw
-          drowMap(Matrix);
-          if(player1.type === 0){
-            player1.type=1; 
-            player1.headcolor='darkviolet'; 
-            player1.bodycolor='indigo'}
-          else if(player1.type === 1){
-            player1.type=2; 
-            player1.headcolor='silver'; 
-            player1.bodycolor='dimgray'}
-          else if(player1.type === 2){
-            player1.type=0; 
-            player1.headcolor='olive'; 
-            player1.bodycolor='darkolivegreen'}
-          else if(player1.type === -1){
-            player1.type=0; 
-            player1.headcolor='olive'; 
-            player1.bodycolor='darkolivegreen'
-            //restatus
-            player1.maxhp=100;
-            player1.hp=100;
-            player1.hpgain=1/30;
-            player1.maxmp=100;
-            player1.mp=100;
-            player1.mpgain=1/2;
-            player1.spe=4.5;
-          }
-          //status
-          drawstatus();   
-        }    
-        //for calculate process speed
-        ps++;
-      }
-      if (BLOCK_MATRIX[row][col] === 4 && blockX<canvas.width+150 && blockX>-100){
-        if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
-          player1.hp=-100
-          goal.n=1;
+            }//地面
+            if(enemy.x- enemy.speedX/2 > blockX && enemy.x - enemy.speedX/2< blockX + BLOCK_SIZE){
+              if(enemy.y > blockY && enemy.y - enemy.width < blockY + BLOCK_SIZE){
+                enemy.speedY = (blockY + BLOCK_SIZE - enemy.y + enemy.width)*1;
+              }
+            }//天井
+            if(enemy.y + enemy.width*3/4 > blockY && enemy.y - enemy.width*3/4 < blockY + BLOCK_SIZE){
+              if(enemy.x + enemy.speedX > blockX && enemy.x < blockX + BLOCK_SIZE/3){
+                enemy.speedX *= -1;
+                enemy.x=blockX - enemy.width;
+              }     
+            }//左
+            if(enemy.y + enemy.width*3/4> blockY && enemy.y - enemy.width*3/4 < blockY + BLOCK_SIZE){
+              if(enemy.x > blockX + BLOCK_SIZE*2/3 && enemy.x + enemy.speedX < blockX + BLOCK_SIZE){
+                enemy.speedX *= -1;
+                enemy.x=blockX + BLOCK_SIZE + enemy.width;
+              }     
+            }//右   
+          //for calculate process speed
+          ps++;
+          });
+          //Rocket
+          rockets.forEach((rocket, rocketIndex) => {
+            if (rocket.x + rkt.radius > blockX && rocket.x - rkt.radius< blockX + BLOCK_SIZE &&
+                rocket.y + rkt.radius > blockY && rocket.y - rkt.radius< blockY + BLOCK_SIZE) {
+              // ブロックを破壊
+              BLOCK_MATRIX[row][col] = 8;
+              for (var i = 0; i < 20; i++) {
+                enm.x = blockX + BLOCK_SIZE/2 + 10*Math.cos(i*Math.PI/10);
+                enm.y = blockY + BLOCK_SIZE/2 + 10*Math.sin(i*Math.PI/10);
+                enm.radius = 3
+                enm.speedx = 3*Math.cos(i*Math.PI/10);
+                enm.speedy = 3*Math.sin(i*Math.PI/10);
+                shootEnemy();
+                blt.x = blockX + BLOCK_SIZE/2;
+                blt.y = blockY + BLOCK_SIZE/2;
+                blt.radius = 3
+                blt.speedx = 3*Math.cos(i*Math.PI/10 + Math.PI/20);
+                blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
+                shootBullet();
+              }
+              breaksound.pause();
+              breaksound.currentTime = 0; // 再生位置をリセット
+              breaksound.play(); // サウンドを再生
+              // 弾を削除
+              rockets.splice(rocketIndex, 1);
+              drowMap(Matrix);
+            }
+          //for calculate process speed
+          ps++;
+          });     
         }
-        //for calculate process speed
-        ps++;
-      }
-      if (BLOCK_MATRIX[row][col] === 5 && blockX<canvas.width+150 && blockX>-100){
-        //player1跳ね返り
-        if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
-          if(player1.y + player1.radius*3/4 > blockY && player1.y < blockY + BLOCK_SIZE/4){
-            if(player1.speedy>0.2){
-              ishoversound=0;
-              hoversound.pause();
-              landsound.pause();
-              landsound.currentTime = 0; // 再生位置をリセット
-              landsound.play(); // サウンドを再生
-            }
-            player1.speedy *= 0;
-            player1.y=blockY - player1.radius*3/4;
-            if(controller['KeyW'] == false){
-              player1.jump1=2; 
-              player1.jump2=0;
-            }
-          //for calculate process speed
-          ps++;
-          }
-        }//地面
-        if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
-          if(player1.y > blockY && player1.y - player1.radius/4 < blockY + BLOCK_SIZE){
-            player1.speedy = (blockY + BLOCK_SIZE - player1.y + player1.radius/4)*1;
-          }
-        //for calculate process speed
-        ps++;
-        }//天井
-        if(player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
-          if(player1.x + player1.radius/2 > blockX && player1.x < blockX + BLOCK_SIZE/3){
-            player1.speedx *= -0.8;
-            player1.x=blockX - player1.radius/2;
-          }     
-        //for calculate process speed
-        ps++;
-        }//左
-        if(player1.y + player1.radius/2> blockY && player1.y < blockY + BLOCK_SIZE){
-          if(player1.x > blockX + BLOCK_SIZE*2/3 && player1.x - player1.radius/2 < blockX + BLOCK_SIZE){
-            player1.speedx *= -0.8;
-            player1.x=blockX + BLOCK_SIZE + player1.radius/2;
-          }     
-        //for calculate process speed
-        ps++;}//右       
-        //npc跳ね返り
-        npcs.forEach((npc, npcIndex) => {
-          if(npc.x + npc.radius/4 > blockX && npc.x - npc.radius/4< blockX + BLOCK_SIZE){
-            if(npc.y + npc.radius*3/4 > blockY && npc.y < blockY + BLOCK_SIZE/4){
-              npc.speedy *= 0;
-              npc.y=blockY - npc.radius*3/4;
-              if(controller['ArrowUp'] == false){
-                npc.jump1=2; 
-                npc.jump2=0;
-              }
-            }
-          }//地面
-          if(npc.x + npc.radius/4 > blockX && npc.x - npc.radius/4< blockX + BLOCK_SIZE){
-            if(npc.y > blockY && npc.y - npc.radius/4 < blockY + BLOCK_SIZE){
-              npc.speedy = (blockY + BLOCK_SIZE - npc.y + npc.radius/4)*1;
-            }
-          }//天井
-          if(npc.y + npc.radius/2 > blockY && npc.y < blockY + BLOCK_SIZE){
-            if(npc.x + npc.radius/2 > blockX && npc.x < blockX + BLOCK_SIZE/3){
-              npc.speedx *= -0.8;
-              npc.initialx=npc.initialx-1;
-            }     
-          }//左
-          if(npc.y + npc.radius/2> blockY && npc.y < blockY + BLOCK_SIZE){
-            if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
-              npc.speedx *= -0.8;
-              npc.initialx=npc.initialx+1;
-            }     
-        }//右
-        //for calculate process speed
-        ps++;
-        });
-
-        //Bullet
-        bullets.forEach((bullet, bulletIndex) => {
-          if (bullet.x + bullet.width > blockX && bullet.x - bullet.width< blockX + BLOCK_SIZE &&
-              bullet.y + bullet.width > blockY && bullet.y - bullet.width< blockY + BLOCK_SIZE) {
-            // 弾を削除
-            ctx.globalAlpha = 0.2;
-            ctx.fillStyle = 'red'; 
-            ctx.fillRect(bullet.x-10, bullet.y-10, 20, 20);
-            ctx.globalAlpha = 1;
-            bullets.splice(bulletIndex, 1);
-          }  
-        //for calculate process speed
-        ps++;
-        });
-
-        //Enemy
-        enemys.forEach((enemy, enemyIndex) => {
-          if (enemy.x + enemy.width > blockX && enemy.x - enemy.width< blockX + BLOCK_SIZE &&
-              enemy.y + enemy.width > blockY && enemy.y - enemy.width< blockY + BLOCK_SIZE) {
-            // 弾を削除
-            ctx.globalAlpha = 0.2;
-            ctx.fillStyle = 'red'; 
-            ctx.fillRect(enemy.x-10, enemy.y-10, 20, 20);
-            ctx.globalAlpha = 1;
-            enemys.splice(enemyIndex, 1);
-          } 
-        //for calculate process speed
-        ps++;
-        });
-      
-        //biim1
-        biim1s.forEach((biim1, biim1Index) => {
-          if (biim1.x + biim1.width > blockX && biim1.x - biim1.width< blockX + BLOCK_SIZE &&
-              biim1.y + biim1.width > blockY && biim1.y - biim1.width< blockY + BLOCK_SIZE) {
-            // 弾を削除
-            ctx.globalAlpha = 0.2;
-            ctx.fillStyle = 'red'; 
-            ctx.fillRect(biim1.x-10, biim1.y-10, 20, 20);
-            ctx.globalAlpha = 1;
-            biim1s.splice(biim1Index, 1);
-          }  
-        //for calculate process speed
-        ps++;
-        });
-
-        //biim2
-        biim2s.forEach((biim2, biim2Index) => {
-          if (biim2.x + biim2.width > blockX && biim2.x - biim2.width< blockX + BLOCK_SIZE &&
-              biim2.y + biim2.width > blockY && biim2.y - biim2.width< blockY + BLOCK_SIZE) {
-            // 弾を削除
-            ctx.globalAlpha = 0.2;
-            ctx.fillStyle = 'red'; 
-            ctx.fillRect(biim2.x-10, biim2.y-10, 20, 20);
-            ctx.globalAlpha = 1;
-            biim2s.splice(biim2Index, 1);
-          }  
-        //for calculate process speed
-        ps++;
-        });
-
-        //Rocket
-        rockets.forEach((rocket, rocketIndex) => {
-          if (rocket.x + rocket.width > blockX && rocket.x - rocket.width< blockX + BLOCK_SIZE &&
-              rocket.y + rocket.width > blockY && rocket.y - rocket.width< blockY + BLOCK_SIZE) {
-            // 弾を削除
-            for (var i = 0; i < 20; i++) {
-              enm.x = rocket.x + 10*Math.cos(i*Math.PI/10);
-              enm.y = rocket.y + 10*Math.sin(i*Math.PI/10);
-              enm.radius = 3
-              enm.speedx = 3*Math.cos(i*Math.PI/10);
-              enm.speedy = 3*Math.sin(i*Math.PI/10);
-              shootEnemy();
-              blt.x = rocket.x ;
-              blt.y = rocket.y ;
-              blt.radius = 3
-              blt.speedx = 3*Math.cos(i*Math.PI/10 + Math.PI/20);
-              blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
-              shootBullet();
-            }
-            breaksound.pause();
-            breaksound.currentTime = 0; // 再生位置をリセット
-            breaksound.play(); // サウンドを再生
-            rockets.splice(rocketIndex, 1);
-          }
-        //for calculate process speed
-        ps++;
-        });     
-      }
-      if (BLOCK_MATRIX[row][col] === 6 && blockX<canvas.width+100 && blockX>-50){
-        if(t_count%300==0){
+        if (BLOCK_MATRIX[row][col] === 2 && blockX<canvas.width+100 && blockX>-50){
           nplayer.x=blockX;
           nplayer.y=blockY;
           generateNplayer();
-          warpsound.pause();
-          warpsound.currentTime = 0; // 再生位置をリセット
-          warpsound.play(); // サウンドを再生
+          // ブロックを変更
+          BLOCK_MATRIX[row][col] = 7;
         }
-        //Rocket
-        rockets.forEach((rocket, rocketIndex) => {
-          if (rocket.x + rocket.width > blockX && rocket.x - rocket.width< blockX + BLOCK_SIZE &&
-              rocket.y + rocket.width > blockY && rocket.y - rocket.width< blockY + BLOCK_SIZE) {
-            // ブロックを破壊
+        if (BLOCK_MATRIX[row][col] === 3 && blockX<canvas.width+150 && blockX>-100){
+          if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
+            itemsound.pause();
+            itemsound.currentTime = 0; // 再生位置をリセット
+            itemsound.play(); // サウンドを再生
+            //erase block
             BLOCK_MATRIX[row][col] = 0;
-            for (var i = 0; i < 20; i++) {
-              enm.x = blockX + BLOCK_SIZE/2 + 10*Math.cos(i*Math.PI/10);
-              enm.y = blockY + BLOCK_SIZE/2 + 10*Math.sin(i*Math.PI/10);
-              enm.radius = 3
-              enm.speedx = 3*Math.cos(i*Math.PI/10);
-              enm.speedy = 3*Math.sin(i*Math.PI/10);
-              shootEnemy();
-              blt.x = blockX + BLOCK_SIZE/2;
-              blt.y = blockY + BLOCK_SIZE/2;
-              blt.radius = 3
-              blt.speedx = 3*Math.cos(i*Math.PI/10 + Math.PI/20);
-              blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
-              shootBullet();
-            }
-            breaksound.pause();
-            breaksound.currentTime = 0; // 再生位置をリセット
-            breaksound.play(); // サウンドを再生
-            // 弾を削除
-            rockets.splice(rocketIndex, 1);
+            //map redraw
             drowMap(Matrix);
+            if(player1.type === 0){
+              player1.type=1; 
+              player1.headcolor='darkviolet'; 
+              player1.bodycolor='indigo'}
+            else if(player1.type === 1){
+              player1.type=2; 
+              player1.headcolor='silver'; 
+              player1.bodycolor='dimgray'}
+            else if(player1.type === 2){
+              player1.type=0; 
+              player1.headcolor='olive'; 
+              player1.bodycolor='darkolivegreen'}
+            else if(player1.type === -1){
+              player1.type=0; 
+              player1.headcolor='olive'; 
+              player1.bodycolor='darkolivegreen'
+              //restatus
+              player1.maxhp=100;
+              player1.hp=100;
+              player1.hpgain=1/30;
+              player1.maxmp=100;
+              player1.mp=100;
+              player1.mpgain=1/2;
+              player1.spe=4.5;
+            }
+            //status
+            drawstatus();   
+          }    
+          //for calculate process speed
+          ps++;
+        }
+        if (BLOCK_MATRIX[row][col] === 4 && blockX<canvas.width+50 && blockX>-50){
+          goal.x=blockX; goal.y=blockY;
+          if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
+            player1.hp=-100
+            goal.n=1;
           }
-        //for calculate process speed
-        ps++;
-        }); 
-        //Bullet
-        bullets.forEach((bullet, bulletIndex) => {
-          if (bullet.x + bullet.width > blockX && bullet.x - bullet.width< blockX + BLOCK_SIZE &&
-              bullet.y + bullet.width > blockY && bullet.y - bullet.width< blockY + BLOCK_SIZE) {
-            // 弾を削除
-            ctx.globalAlpha = 0.2;
-            ctx.fillStyle = 'red'; 
-            ctx.fillRect(bullet.x-10, bullet.y-10, 20, 20);
-            ctx.globalAlpha = 1;
-            bullets.splice(bulletIndex, 1);
-          }  
-        //for calculate process speed
-        ps++;
-        });
-      }
-      if (BLOCK_MATRIX[row][col] === 7 && (blockX>canvas.width+150 || blockX<-100)){
-        BLOCK_MATRIX[row][col] = 2;
-      }
-      if (BLOCK_MATRIX[row][col] === 8 && t_count%60==0){
+          //for calculate process speed
+          ps++;
+        }
+        if (BLOCK_MATRIX[row][col] === 5 && blockX<canvas.width+150 && blockX>-100){
+          //player1跳ね返り
+          if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
+            if(player1.y + player1.radius*3/4 > blockY && player1.y < blockY + BLOCK_SIZE/4){
+              if(player1.speedy>0.2){
+                ishoversound=0;
+                hoversound.pause();
+                landsound.pause();
+                landsound.currentTime = 0; // 再生位置をリセット
+                landsound.play(); // サウンドを再生
+              }
+              player1.speedy *= 0;
+              player1.y=blockY - player1.radius*3/4;
+              if(controller['KeyW'] == false){
+                player1.jump1=2; 
+                player1.jump2=0;
+              }
+            //for calculate process speed
+            ps++;
+            }
+          }//地面
+          if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
+            if(player1.y > blockY && player1.y - player1.radius/4 < blockY + BLOCK_SIZE){
+              player1.speedy = (blockY + BLOCK_SIZE - player1.y + player1.radius/4)*1;
+            }
+          //for calculate process speed
+          ps++;
+          }//天井
+          if(player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
+            if(player1.x + player1.radius/2 > blockX && player1.x < blockX + BLOCK_SIZE/3){
+              player1.speedx *= -0.8;
+              player1.x=blockX - player1.radius/2;
+            }     
+          //for calculate process speed
+          ps++;
+          }//左
+          if(player1.y + player1.radius/2> blockY && player1.y < blockY + BLOCK_SIZE){
+            if(player1.x > blockX + BLOCK_SIZE*2/3 && player1.x - player1.radius/2 < blockX + BLOCK_SIZE){
+              player1.speedx *= -0.8;
+              player1.x=blockX + BLOCK_SIZE + player1.radius/2;
+            }     
+          //for calculate process speed
+          ps++;}//右       
+          //npc跳ね返り
+          npcs.forEach((npc, npcIndex) => {
+            if(npc.x>-100 && npc.x<canvas.width+100){
+              if(npc.x + npc.radius/4 > blockX && npc.x - npc.radius/4< blockX + BLOCK_SIZE){
+                if(npc.y + npc.radius*3/4 > blockY && npc.y < blockY + BLOCK_SIZE/4){
+                  npc.speedy *= 0;
+                  npc.y=blockY - npc.radius*3/4;
+                  if(controller['ArrowUp'] == false){
+                    npc.jump1=2; 
+                    npc.jump2=0;
+                  }
+                }
+              }//地面
+              if(npc.x + npc.radius/4 > blockX && npc.x - npc.radius/4< blockX + BLOCK_SIZE){
+                if(npc.y > blockY && npc.y - npc.radius/4 < blockY + BLOCK_SIZE){
+                  npc.speedy = (blockY + BLOCK_SIZE - npc.y + npc.radius/4)*1;
+                }
+              }//天井
+              if(npc.y + npc.radius/2 > blockY && npc.y < blockY + BLOCK_SIZE){
+                if(npc.x + npc.radius/2 > blockX && npc.x < blockX + BLOCK_SIZE/3){
+                  npc.speedx *= -0.8;
+                  npc.initialx=npc.initialx-1;
+                }     
+              }//左
+              if(npc.y + npc.radius/2> blockY && npc.y < blockY + BLOCK_SIZE){
+                if(npc.x > blockX + BLOCK_SIZE*2/3 && npc.x - npc.radius/2 < blockX + BLOCK_SIZE){
+                  npc.speedx *= -0.8;
+                  npc.initialx=npc.initialx+1;
+                }     
+            }//右
+              //for calculate process speed
+              ps++;
+            }
+          });
+
+          //Bullet
+          bullets.forEach((bullet, bulletIndex) => {
+            if (bullet.x + bullet.width > blockX && bullet.x - bullet.width< blockX + BLOCK_SIZE &&
+                bullet.y + bullet.width > blockY && bullet.y - bullet.width< blockY + BLOCK_SIZE) {
+              // 弾を削除
+              ctx.globalAlpha = 0.2;
+              ctx.fillStyle = 'red'; 
+              ctx.fillRect(bullet.x-10, bullet.y-10, 20, 20);
+              ctx.globalAlpha = 1;
+              bullets.splice(bulletIndex, 1);
+            }  
+          //for calculate process speed
+          ps++;
+          });
+
+          //Enemy
+          enemys.forEach((enemy, enemyIndex) => {
+            if (enemy.x + enemy.width > blockX && enemy.x - enemy.width< blockX + BLOCK_SIZE &&
+                enemy.y + enemy.width > blockY && enemy.y - enemy.width< blockY + BLOCK_SIZE) {
+              // 弾を削除
+              ctx.globalAlpha = 0.2;
+              ctx.fillStyle = 'red'; 
+              ctx.fillRect(enemy.x-10, enemy.y-10, 20, 20);
+              ctx.globalAlpha = 1;
+              enemys.splice(enemyIndex, 1);
+            } 
+          //for calculate process speed
+          ps++;
+          });
+        
+          //biim1
+          biim1s.forEach((biim1, biim1Index) => {
+            if (biim1.x + biim1.width > blockX && biim1.x - biim1.width< blockX + BLOCK_SIZE &&
+                biim1.y + biim1.width > blockY && biim1.y - biim1.width< blockY + BLOCK_SIZE) {
+              // 弾を削除
+              ctx.globalAlpha = 0.2;
+              ctx.fillStyle = 'red'; 
+              ctx.fillRect(biim1.x-10, biim1.y-10, 20, 20);
+              ctx.globalAlpha = 1;
+              biim1s.splice(biim1Index, 1);
+            }  
+          //for calculate process speed
+          ps++;
+          });
+
+          //biim2
+          biim2s.forEach((biim2, biim2Index) => {
+            if (biim2.x + biim2.width > blockX && biim2.x - biim2.width< blockX + BLOCK_SIZE &&
+                biim2.y + biim2.width > blockY && biim2.y - biim2.width< blockY + BLOCK_SIZE) {
+              // 弾を削除
+              ctx.globalAlpha = 0.2;
+              ctx.fillStyle = 'red'; 
+              ctx.fillRect(biim2.x-10, biim2.y-10, 20, 20);
+              ctx.globalAlpha = 1;
+              biim2s.splice(biim2Index, 1);
+            }  
+          //for calculate process speed
+          ps++;
+          });
+
+          //Rocket
+          rockets.forEach((rocket, rocketIndex) => {
+            if (rocket.x + rkt.radius > blockX && rocket.x - rkt.radius< blockX + BLOCK_SIZE &&
+                rocket.y + rkt.radius > blockY && rocket.y - rkt.radius< blockY + BLOCK_SIZE) {
+              // 弾を削除
+              for (var i = 0; i < 20; i++) {
+                enm.x = rocket.x + 10*Math.cos(i*Math.PI/10);
+                enm.y = rocket.y + 10*Math.sin(i*Math.PI/10);
+                enm.radius = 3
+                enm.speedx = 3*Math.cos(i*Math.PI/10);
+                enm.speedy = 3*Math.sin(i*Math.PI/10);
+                shootEnemy();
+                blt.x = rocket.x ;
+                blt.y = rocket.y ;
+                blt.radius = 3
+                blt.speedx = 3*Math.cos(i*Math.PI/10 + Math.PI/20);
+                blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
+                shootBullet();
+              }
+              breaksound.pause();
+              breaksound.currentTime = 0; // 再生位置をリセット
+              breaksound.play(); // サウンドを再生
+              rockets.splice(rocketIndex, 1);
+            }
+          //for calculate process speed
+          ps++;
+          });     
+        }
+        if (BLOCK_MATRIX[row][col] === 6 && blockX<canvas.width+100 && blockX>-50){
+          if(t_count%300==0){
+            nplayer.x=blockX;
+            nplayer.y=blockY;
+            generateNplayer();
+            warpsound.pause();
+            warpsound.currentTime = 0; // 再生位置をリセット
+            warpsound.play(); // サウンドを再生
+          }
+          //Rocket
+          rockets.forEach((rocket, rocketIndex) => {
+            if (rocket.x + rkt.radius > blockX && rocket.x - rkt.radius< blockX + BLOCK_SIZE &&
+                rocket.y + rkt.radius > blockY && rocket.y - rkt.radius< blockY + BLOCK_SIZE) {
+              // ブロックを破壊
+              BLOCK_MATRIX[row][col] = 0;
+              for (var i = 0; i < 20; i++) {
+                enm.x = blockX + BLOCK_SIZE/2 + 10*Math.cos(i*Math.PI/10);
+                enm.y = blockY + BLOCK_SIZE/2 + 10*Math.sin(i*Math.PI/10);
+                enm.radius = 3
+                enm.speedx = 3*Math.cos(i*Math.PI/10);
+                enm.speedy = 3*Math.sin(i*Math.PI/10);
+                shootEnemy();
+                blt.x = blockX + BLOCK_SIZE/2;
+                blt.y = blockY + BLOCK_SIZE/2;
+                blt.radius = 3
+                blt.speedx = 3*Math.cos(i*Math.PI/10 + Math.PI/20);
+                blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
+                shootBullet();
+              }
+              breaksound.pause();
+              breaksound.currentTime = 0; // 再生位置をリセット
+              breaksound.play(); // サウンドを再生
+              // 弾を削除
+              rockets.splice(rocketIndex, 1);
+              drowMap(Matrix);
+            }
+          //for calculate process speed
+          ps++;
+          }); 
+          //Bullet
+          bullets.forEach((bullet, bulletIndex) => {
+            if (bullet.x + bullet.width > blockX && bullet.x - bullet.width< blockX + BLOCK_SIZE &&
+                bullet.y + bullet.width > blockY && bullet.y - bullet.width< blockY + BLOCK_SIZE) {
+              // 弾を削除
+              ctx.globalAlpha = 0.2;
+              ctx.fillStyle = 'red'; 
+              ctx.fillRect(bullet.x-10, bullet.y-10, 20, 20);
+              ctx.globalAlpha = 1;
+              bullets.splice(bulletIndex, 1);
+            }  
+          //for calculate process speed
+          ps++;
+          });
+        }
+        if (BLOCK_MATRIX[row][col] === 7 && (blockX>canvas.width+150 || blockX<-100)){
+          BLOCK_MATRIX[row][col] = 2;
+        }
+        if (BLOCK_MATRIX[row][col] === 8 && t_count%60==0){
         if(Math.random()<1/6){
           //regenerate block1
           BLOCK_MATRIX[row][col] = 1;
@@ -1621,12 +1666,14 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           drowMap(Matrix);
         }
       }
+      }
     } 
   }
 }
 function playerCollision(){
   npcs.forEach((npc, npcIndex) => {
     if (
+      npc.x>100 && npc.x<canvas.width-100 &&
       player1.x - player1.radius/2< npc.x + npc.radius/2 &&
       player1.x + player1.radius/2 > npc.x - npc.radius/2 &&
       player1.y - player1.radius/4< npc.y + npc.radius*3/4 &&
@@ -1639,7 +1686,9 @@ function playerCollision(){
       npc.speedx = -player1.speedx;
       npc.speedy = -player1.speedy;
       //damage
-      player1.hp -= 4;
+      if(player1.y + player1.radius*3/4 > npc.y){
+        player1.hp -= 4;
+      }
       npc.hp -= 4;
       player1.result+=4;
       player1.taken+=4;
@@ -1665,6 +1714,7 @@ function playerBltEnm(){
   bullets.forEach((bullet, bulletIndex) => {
     npcs.forEach((npc, npcIndex) => {
       if (
+        npc.x>-50 && npc.x<canvas.width+50 &&
         bullet.x - bullet.width< npc.x + npc.radius/2 &&
         bullet.x + bullet.width > npc.x - npc.radius/2 &&
         bullet.y - bullet.width< npc.y + npc.radius*3/4 &&
@@ -1715,6 +1765,7 @@ function playerBim(){
   biim1s.forEach((biim1, biim1Index) => {
     npcs.forEach((npc, npcIndex) => {
       if (
+        npc.x>-50 && npc.x<canvas.width+50 &&
         biim1.x - biim1.width< npc.x + npc.radius/2 &&
         biim1.x + biim1.width > npc.x - npc.radius/2 &&
         biim1.y - biim1.width< npc.y + npc.radius*3/4 &&
@@ -1844,10 +1895,11 @@ function playerRocket(){
   rockets.forEach((rocket, rocketIndex) => {
     npcs.forEach((npc, npcIndex) => {
       if (
-        rocket.x - rocket.width< npc.x + npc.radius/2 &&
-        rocket.x + rocket.width > npc.x - npc.radius/2 &&
-        rocket.y - rocket.width< npc.y + npc.radius*3/4 &&
-        rocket.y + rocket.width > npc.y - npc.radius/4
+        npc.x>-100 && npc.x<canvas.width+100 &&
+        rocket.x - rkt.radius< npc.x + npc.radius/2 &&
+        rocket.x + rkt.radius > npc.x - npc.radius/2 &&
+        rocket.y - rkt.radius< npc.y + npc.radius*3/4 &&
+        rocket.y + rkt.radius > npc.y - npc.radius/4 
       ){
         ctx.globalAlpha = 0.1;
         ctx.fillStyle = 'orange'; 
@@ -1888,10 +1940,10 @@ function playerRocket(){
   /* 暫定的に出番こない
   rockets.forEach((rocket, rocketIndex) => {  
     if (
-      rocket.x - rocket.width< player1.x + player1.radius/2 &&
-      rocket.x + rocket.width > player1.x - player1.radius/2 &&
-      rocket.y - rocket.width< player1.y + player1.radius*3/4 &&
-      rocket.y + rocket.width > player1.y - player1.radius/4
+      rocket.x - rkt.radius< player1.x + player1.radius/2 &&
+      rocket.x + rkt.radius > player1.x - player1.radius/2 &&
+      rocket.y - rkt.radius< player1.y + player1.radius*3/4 &&
+      rocket.y + rkt.radius > player1.y - player1.radius/4
     ){
       ctx.globalAlpha = 0.1;
       ctx.fillStyle = 'orange'; 
@@ -1921,10 +1973,10 @@ function rocketBltEnmBim(){
     //biim
     biim1s.forEach((biim1, biim1Index) => {
       if (
-        rocket.x - rocket.width< biim1.x + biim1.width &&
-        rocket.x + rocket.width > biim1.x - biim1.width&&
-        rocket.y - rocket.width< biim1.y + biim1.width &&
-        rocket.y + rocket.width > biim1.y - biim1.width
+        rocket.x - rkt.radius< biim1.x + biim1.width &&
+        rocket.x + rkt.radius > biim1.x - biim1.width&&
+        rocket.y - rkt.radius< biim1.y + biim1.width &&
+        rocket.y + rkt.radius > biim1.y - biim1.width
       ) { 
         ctx.globalAlpha = 0.2;
         ctx.fillStyle = 'red'; 
@@ -1941,10 +1993,10 @@ function rocketBltEnmBim(){
     });
     biim2s.forEach((biim2, biim2Index) => {
       if (
-        rocket.x - rocket.width< biim2.x + biim2.width &&
-        rocket.x + rocket.width > biim2.x - biim2.width&&
-        rocket.y - rocket.width< biim2.y + biim2.width &&
-        rocket.y + rocket.width > biim2.y - biim2.width
+        rocket.x - rkt.radius< biim2.x + biim2.width &&
+        rocket.x + rkt.radius > biim2.x - biim2.width&&
+        rocket.y - rkt.radius< biim2.y + biim2.width &&
+        rocket.y + rkt.radius > biim2.y - biim2.width
       ) { 
         ctx.globalAlpha = 0.2;
         ctx.fillStyle = 'red'; 
@@ -1962,10 +2014,10 @@ function rocketBltEnmBim(){
     //bullet
     bullets.forEach((bullet, bulletIndex) => {
       if (
-        rocket.x - rocket.width< bullet.x + bullet.width &&
-        rocket.x + rocket.width > bullet.x - bullet.width&&
-        rocket.y - rocket.width< bullet.y + bullet.width &&
-        rocket.y + rocket.width > bullet.y - bullet.width
+        rocket.x - rkt.radius< bullet.x + bullet.width &&
+        rocket.x + rkt.radius > bullet.x - bullet.width&&
+        rocket.y - rkt.radius< bullet.y + bullet.width &&
+        rocket.y + rkt.radius > bullet.y - bullet.width
       ) { 
         ctx.globalAlpha = 0.2;
         ctx.fillStyle = 'red'; 
@@ -1983,10 +2035,10 @@ function rocketBltEnmBim(){
     //enemy
     enemys.forEach((enemy, enemyIndex) => {
       if (
-        rocket.x - rocket.width< enemy.x + enemy.width &&
-        rocket.x + rocket.width > enemy.x - enemy.width&&
-        rocket.y - rocket.width< enemy.y + enemy.width &&
-        rocket.y + rocket.width > enemy.y - enemy.width
+        rocket.x - rkt.radius< enemy.x + enemy.width &&
+        rocket.x + rkt.radius > enemy.x - enemy.width&&
+        rocket.y - rkt.radius< enemy.y + enemy.width &&
+        rocket.y + rkt.radius > enemy.y - enemy.width
       ) { 
         ctx.globalAlpha = 0.2;
         ctx.fillStyle = 'red'; 
@@ -2035,6 +2087,48 @@ function playerItem(){
       itemsound.currentTime = 0; // 再生位置をリセット
       itemsound.play(); // サウンドを再生
     }
+  });
+}
+function minenpc(){
+  mines.forEach((mine, mineIndex) => {
+    npcs.forEach((npc, npcIndex) => {
+      if (
+        npc.x>-50 && npc.x<canvas.width+50 &&
+        mine.x - BLOCK_SIZE/4 < npc.x + npc.radius/2 &&
+        mine.x + BLOCK_SIZE/4 > npc.x - npc.radius/2 &&
+        mine.y - BLOCK_SIZE/2 < npc.y + npc.radius*3/4 &&
+        mine.y > npc.y - npc.radius/4
+      ){
+        //爆発の破片
+        for (var i = 0; i < 20; i++) {
+          enm.x = min.x + 10*Math.cos(i*Math.PI/10);
+          enm.y = min.y + 10*Math.sin(i*Math.PI/10);
+          enm.radius = 3
+          enm.speedx = 3*Math.cos(i*Math.PI/10);
+          enm.speedy = 3*Math.sin(i*Math.PI/10);
+          shootEnemy();
+          blt.x = min.x ;
+          blt.y = min.y ;
+          blt.radius = 3
+          blt.speedx = 3*Math.cos(i*Math.PI/10 + Math.PI/20);
+          blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
+          shootBullet();
+        }//削除
+        mines.splice(mineIndex, 1);
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = 'red'; 
+        ctx.fillRect(npc.x - npc.radius/2, npc.y - npc.radius/4, npc.radius, npc.radius);
+        ctx.globalAlpha = 1;
+        npc.speedx -= (mine.x - npc.x)/20;
+        npc.speedy -= (mine.y - npc.y)/20;
+        if(npc.hp>=0){
+          npc.hp-=min.damage;
+          player1.result+=min.damage;
+        }
+        //for calculate process speed
+        ps++;
+      }
+    });
   });
 }
 
@@ -2094,7 +2188,8 @@ function controll(){
   }
   else if(controller['KeyF']){
     if(player1.type === 0){shield()}
-    if(player1.type === 1){superbiim()}
+    else if(player1.type === 1){superbiim()}
+    else{groundmine();}
   }
 
   //previous controll keys
@@ -2334,7 +2429,7 @@ function controll(){
 //shot and special moves
 function gunshot(){
   if(player1.mp>0){bim1.t = 45
-    if(bim1.count>bim1.delay/3){
+    if(bim1.count>bim1.delay/2){
       shotsound.pause();
       shotsound.currentTime = 0; // 再生位置をリセット
       shotsound.play(); // サウンドを再生
@@ -2347,7 +2442,7 @@ function gunshot(){
         bim1.speedy = (i/6+6)*Math.sin(player1.angle);
         shootBiim1();
       }
-      bim1.count-=bim1.delay/3;
+      bim1.count=0;
       /* 無反動
       player1.speedx -= Math.cos(player1.angle)/6;
       player1.speedy -= Math.sin(player1.angle)/6;
@@ -2556,7 +2651,6 @@ function bombrocket(){
       ctx.arc(player1.x + 20*Math.cos(player1.angle), player1.y + 20*Math.sin(player1.angle), 5, 0,Math.PI * 2);
       ctx.fill();
       ctx.closePath();
-      ctx.globalAlpha = 1;
     }
   }
   if(player1.drone>0){
@@ -2574,6 +2668,30 @@ function bombrocket(){
       shootRocket();
     }
   }
+}
+function groundmine(){
+  if(player1.mp>0){
+    if(min.count>min.delay){
+      landsound.pause();
+      landsound.currentTime = 0; // 再生位置をリセット
+      landsound.play(); // サウンドを再生
+      min.x = player1.x;
+      min.y = player1.y + player1.radius*3/4
+      shootMine();
+      min.count = 0;
+    }
+    else{
+      player1.mp-=80/min.delay;
+      min.count += 1;
+      ctx.beginPath();
+      ctx.fillStyle = 'black';
+      ctx.globalAlpha = min.count/min.delay/3+1/3;
+      ctx.arc(player1.x, player1.y + player1.radius*3/4, 5, Math.PI, 0);
+      ctx.fill();
+      ctx.closePath();
+    }
+  }
+
 }
 
 //Text
@@ -2639,6 +2757,7 @@ function drawstatus(){
   menuctx.fillText("Speed", 200, 560);
   if(player1.state*10<player1.expcap){menuctx.fillStyle='#966464';} //not enough exp
   menuctx.fillText(" EXP", 200, 585);
+  //status bar and figure
   menuctx.fillStyle = 'green';
   menuctx.fillText(Math.ceil(player1.maxhp), 60, 510);
   menuctx.fillText(Math.ceil(player1.hpgain*600)/10, 60, 535);
@@ -2670,9 +2789,9 @@ function drawstatus(){
   }
   else if(player1.type==-1){
     menuctx.fillText(Math.ceil(bim1.damage*3), 250, 510);
-    menuctx.fillText(Math.ceil(180/bim1.delay), 250, 535);
+    menuctx.fillText(Math.ceil(120/bim1.delay), 250, 535);
     menuctx.fillRect(280,502,bim1.damage*3,6);
-    menuctx.fillRect(280,527,1500/bim1.delay,6);
+    menuctx.fillRect(280,527,1000/bim1.delay,6);
   }
   menuctx.fillStyle = 'orange';
   menuctx.fillText(Math.ceil(player1.spe*60), 250, 560);
@@ -2680,6 +2799,26 @@ function drawstatus(){
   menuctx.fillStyle = 'yellow';
   menuctx.fillText(player1.state*10+" / "+player1.expcap, 250, 585);
   menuctx.fillRect(305,577,player1.state*750/player1.expcap,6);
+  //write abilities
+  menuctx.fillStyle = '#ECB8B8';
+  menuctx.fillText("hold [shift] ↓", 400, 510);
+  menuctx.fillText("hold [f] key↓", 400, 560);
+  if(player1.type==0){
+    menuctx.fillText("Cannon", 400, 530);
+    menuctx.fillText("Detonation", 400, 580);
+  }
+  else if(player1.type==1){
+    menuctx.fillText("Beam-Shot", 400, 530);
+    menuctx.fillText("Super-Beam", 400, 580);
+  }
+  else if(player1.type==2){
+    menuctx.fillText("Rocket-Bomb", 400, 530);
+    menuctx.fillText("Teleport", 400, 580);
+  }
+  else {
+    menuctx.fillText("Beam-Gun", 400, 530);
+    menuctx.fillText("Landmine", 400, 580);
+  }
   //for calculate process speed
   ps++;
 }
@@ -2703,18 +2842,43 @@ function start(){
     ctx.fillText("the Type of your Tank", 100, 315);
   ctx.lineWidth = 2; // 枠線の幅
   ctx.strokeStyle = 'black';
+  //draw sample tanks and human
+    player1.x=475;
+    player1.y=475;
+    player1.type=-1;
+    player1.headcolor='silver'; 
+    player1.bodycolor='dimgray';
+  drawPlayers();
+  player1.y=360;
+  player1.type=0;
+    player1.x=400;
+  drawPlayers();
+    player1.x=300;
+    player1.headcolor='darkviolet'; 
+    player1.bodycolor='indigo'
+  drawPlayers();
+    player1.x=200;
+    player1.headcolor='olive'; 
+    player1.bodycolor='darkolivegreen'
+  drawPlayers();
   //menu欄
   drawstatus();
-  //for test play
-  itm.type=2;
-  itm.y=400;
-  for (var i = 0; i < 5; i++){
-    itm.x=220+25*i;
-    generateItem();
+  //goal位置の指定
+  for (let row = 0; row < Matrix.length; row++) {
+    const rowLength = Matrix[row].length;
+    for (let col = 0; col < rowLength; col++) {
+      const blockX = col * (BLOCK_SIZE + BLOCK_GAP) - mapX;
+      const blockY = row * (BLOCK_SIZE + BLOCK_GAP);
+      if (Matrix[row][col] === 4 && blockX<canvas.width+150 && blockX>-100){
+        goal.x=blockX; goal.y=blockY;
+      }
+    } 
   }
-  itm.type=0;
-  for (var i = 0; i < 1; i++){
-    itm.x=420+25*i;
+  //for test play
+  itm.y=400;
+  itm.type=2;
+  for (var i = 0; i < 4; i++){
+    itm.x=220+25*i;
     generateItem();
   }
 }
@@ -2746,6 +2910,18 @@ function handleKeyPress(event) {
     drowMap(Matrix);
     drawstatus();
     gameLoop();
+    //for test play
+    itm.y=400;
+    itm.type=0;
+    for (var i = 0; i < 1; i++){
+      itm.x=420+25*i;
+      generateItem();
+    }
+    itm.type=2;
+    for (var i = 0; i < 4; i++){
+      itm.x=320+25*i;
+      generateItem();
+    }
   }
   if (event.code === "Digit1" && isFunctionExecuted) {
     isFunctionExecuted = false; // フラグをtrue→二度実行されない
@@ -2872,6 +3048,8 @@ function gameLoop() {
     drawgoal()}
   if(items.length>0){
     drawItem()}
+  if(mines.length>0){
+    drawMine()}
 
   //ギミック
   Rain(limit/2);
@@ -2892,12 +3070,14 @@ function gameLoop() {
   //player
   playerBltEnm(); 
   playerBim();
-  playerRocket();
+  if(rockets.length>0){playerRocket();}
   //弾
   bltBim1_enmBim2();
-  rocketBltEnmBim();
+  if(rockets.length>0){rocketBltEnmBim();}
   //item
-  playerItem();
+  if(items.length>0){playerItem();}
+  //mine
+  if(mines.length>0){minenpc();}
 
   //時間経過で消滅
   bullets.forEach((bullet, bulletIndex) => {
@@ -3110,7 +3290,7 @@ menuCanvas.addEventListener("click", function(event) {
     menu();
   }
   //upgrade powerup
-  if(mouse_y>503 && mouse_x>12 && mouse_x<233 && mouse_y<588 && player1.state*10>=player1.expcap/10){
+  else if(mouse_y>503 && mouse_x>12 && mouse_x<233 && mouse_y<588 && player1.state*10>=player1.expcap/10){
     if(mouse_x<48){
       if(mouse_y<512 && player1.grade>player1.grade1){//hp
         player1.maxhp *= 1.1;
@@ -3118,19 +3298,19 @@ menuCanvas.addEventListener("click", function(event) {
         player1.grade1 += 1;
         drawstatus();
       }
-      if(mouse_y>528 && mouse_y<537 && player1.grade>player1.grade2){//hp+
+      else if(mouse_y>528 && mouse_y<537 && player1.grade>player1.grade2){//hp+
         player1.hpgain *= 1.1
         player1.state -= player1.expcap/100;
         player1.grade2 += 1;
         drawstatus();
       }
-      if(mouse_y>553 && mouse_y<563 && player1.grade>player1.grade3){//mp
+      else if(mouse_y>553 && mouse_y<563 && player1.grade>player1.grade3){//mp
         player1.maxmp *= 1.1
         player1.state -= player1.expcap/100;
         player1.grade3 += 1;
         drawstatus();
       }
-      if(mouse_y>578 && player1.grade>player1.grade4){//mp+
+      else if(mouse_y>578 && player1.grade>player1.grade4){//mp+
         player1.mpgain *= 1.1
         player1.state -= player1.expcap/100;
         player1.grade4 += 1;
@@ -3142,46 +3322,76 @@ menuCanvas.addEventListener("click", function(event) {
         if(player1.type==0){
           blt.damage *= 1.1;
         }
-        if(player1.type==1){
+        else if(player1.type==1){
           bim1.damage *= 1.1;
         }
-        if(player1.type==2){
+        else if(player1.type==2){
           rkt.damage *= 1.1;
+        }
+        else{
+          bim1.damage *= 1.5;
         }
         player1.state -= player1.expcap/100;
         player1.grade5 += 1;
         drawstatus();
       }
-      if(mouse_y>528 && mouse_y<537 && player1.grade>player1.grade6){//as
+      else if(mouse_y>528 && mouse_y<537 && player1.grade>player1.grade6){//as
         if(player1.type==0){
           blt.delay *= 0.9;
         }
-        if(player1.type==1){
+        else if(player1.type==1){
           bim1.delay *= 0.9;
         }
-        if(player1.type==2){
+        else if(player1.type==2){
           rkt.delay *= 0.9;
+        }
+        else{
+          bim1.delay *= 0.7;
         }
         player1.state -= player1.expcap/100;
         player1.grade6 += 1;
         drawstatus();
       }
-      if(mouse_y>553 && mouse_y<563 && player1.grade>player1.grade7){//spe
+      else if(mouse_y>553 && mouse_y<563 && player1.grade>player1.grade7){//spe
         player1.spe *= 1.05;
         player1.state -= player1.expcap/100;
         player1.grade7 += 1;
         drawstatus();
       }
-      if(mouse_y>578 && player1.state*10>=player1.expcap){//EXP upgade
+      else if(mouse_y>578 && player1.state*10>=player1.expcap){//EXP upgade
         player1.grade+=1;
         player1.state = 0;
         //暫定
-        player1.maxhp = (player1.grade+1)*50;
-        player1.hpgain = 1/30+(player1.grade-1)*0.01;
-        player1.maxmp = (player1.grade+1)*50;
-        player1.mpgain = 0.3+player1.grade*0.2;
-        player1.spe = 4+player1.grade*0.5;
-        player1.expcap = (player1.grade+1)*50;
+        if(player1.type==-1){
+          player1.maxhp = player1.grade*20;
+          player1.hpgain = 1/30+(player1.grade-1)*0.02;
+          player1.maxmp = (player1.grade+1)*40;
+          player1.mpgain = 0.2+player1.grade*0.3;
+          player1.spe = 3.5+player1.grade*0.5;
+          player1.expcap = (player1.grade+1)*50;
+          bim1.damage = (player1.grade/5+0.8)**2*1/2;
+          bim1.delay = 30/(player1.grade/10+0.9);
+        }
+        else{
+          player1.maxhp = (player1.grade+1)*50;
+          player1.hpgain = 1/30+(player1.grade-1)*0.01;
+          player1.maxmp = (player1.grade+1)*50;
+          player1.mpgain = 0.3+player1.grade*0.2;
+          player1.spe = 4+player1.grade*0.5;
+          player1.expcap = (player1.grade+1)*50;
+          if(player1.type==0){
+            blt.damage = (player1.grade/10+0.9)**2*2/3;
+            blt.delay = 30/(player1.grade/10+0.9);
+          }
+          else if(player1.type==1){
+            bim1.damage = (player1.grade/10+0.9)**2*1/2;
+            bim1.delay = 30/(player1.grade/10+0.9);
+          }
+          else if(player1.type==2){
+            rkt.damage = (player1.grade/10+0.9)*40;
+            rkt.delay = 60/(player1.grade/5+0.8)**2;
+          }
+        }
         drawstatus();
       }
     }
