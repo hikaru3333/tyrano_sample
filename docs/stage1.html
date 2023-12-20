@@ -14,12 +14,17 @@
         border: 1px solid rgb(105, 58, 234); /* Canvasにボーダーを設定 */
       }
       .stage-page {
-          text-align: center;
+        text-align: center;
       }
       .textContainer {
         position: absolute;
-        top: 620px; 
+        top: 670px; 
         right: 50px;
+      }
+      .bottonContainer {
+        position: absolute;
+        top: 690px;
+        text-align: right;
       }
       h1 {
         color: rgb(225, 176, 176);
@@ -30,11 +35,7 @@
         font-size: 12px;
       }
       .button {
-        position: absolute;
-        left: 100px;
-        top: 670px;
-        transform: translate(-50%, -50%);
-        display: block;
+        display: inline-block;
         padding: 10px;
         background-color: midnightblue;
         color: white;
@@ -46,10 +47,6 @@
         color: #2f1144;
       }
       .button2 {
-        position: absolute;
-        left: 200px;
-        top: 670px;
-        transform: translate(-50%, -50%);
         display: none;
         padding: 10px;
         background-color: purple;
@@ -65,15 +62,16 @@
   </head>
   <body>
     <div class="stage-page">
-      <h1>Stage 1</h1>
-      <h2>[w]:↑ [a]:← [s]:↓ [d]:→</h2>
-      <h2>[ShiftLeft]:SHOT BULLET</h2>
-      <h2>[f]:SPECIAL MOVE</h2>
+      <h1>1</h1>
+      <h2>[w]:↑  [a]:←  [s]:↓  [d]:→  [ShiftLeft]:SHOT BULLET  [f]:SPECIAL MOVE</h2>
     </div>
-    <button id="button1" class="button">Menu</button>
-    <button id="button2" class="button2">Go to Stage 2</button>
+    <div class="bottonContainer">
+      <button id="button1" class="button">Return to Menu Page</button>
+      <button id="button2" class="button2">Go to Stage 2</button>  
+    </div>
     <canvas id="gameCanvas" width="610" height="490"></canvas>
     <canvas id="backgroundCanvas" width="610" height="490"></canvas>
+    <canvas id="menuCanvas" width="610" height="600"></canvas>
     <script>
 //canvas for players
 const canvas = document.getElementById('gameCanvas');
@@ -82,31 +80,54 @@ const ctx = canvas.getContext('2d');
 //canvas for backgraound
 const backgroundCanvas = document.getElementById('backgroundCanvas');
 const backctx = backgroundCanvas.getContext('2d');
+//canvas for meny
+const menuCanvas = document.getElementById('menuCanvas');
+document.body.appendChild(menuCanvas);
+const menuctx = menuCanvas.getContext('2d');
 //get the location of button1
 var button1 = document.getElementById("button1");
 var button2 = document.getElementById("button2");
 
+//※アイテム取得時のログ
+//メニュー欄　ポーズ　過去ログ　システム選択　
+
 //initial states
 //player1
 player1={
-  x: canvas.width /3-100,
-  y: canvas.height/3,
+  x: 200,
+  y: 400,
   radius: 20,
-  speedx: -2,
-  speedy: -2,
+  speedx: 0,
+  speedy: 2,
   accel: 0.1,
   angle: 0,
   length: 15,
   jump1: 2,
   jump2: 0,
   hp: 100,
+  maxhp: 100,
+  hpgain: 1/30,
   mp: 100,
+  maxmp: 100,
+  mpgain: 1/2,
+  spe: 4.5,
   kill: 0,
   result: 0,
   taken: 0,
-  headcolor: 'silver',
-  bodycolor: 'gray',
-  type:0
+  headcolor: 'olive', //initial color
+  bodycolor: 'darkolivegreen',
+  type:0, //
+  state:0, //link to EXP
+  grade:1, //up grade limit
+  grade1: 0, //hp
+  grade2: 0, //hp+
+  grade3: 0, //mp
+  grade4: 0, //mp+
+  grade5: 0, //atk
+  grade6: 0, //a-spe
+  grade7: 0, //spd
+  drone:0, //noumber of drones
+  expcap:100 
 };
 //Nplayer
 nplayer={
@@ -114,13 +135,13 @@ nplayer={
   y: 100,
   radius: 20,
   speedx: -2,
-  speedy: -2,
+  speedy: 0,
   accel: 0.1,
   angle: 0,
   length: 15,
   jump1: 2,
   jump2: 0,
-  hp: 35,
+  hp: 50,
   mp: 100,
   headcolor: 'white',
   bodycolor: 'silver'
@@ -133,7 +154,9 @@ blt = {
   speedx: 0,
   speedy: 0,
   f: 8,
-  count: 0
+  count: 0,
+  damage: 2/3,
+  delay: 30
 };
 //enemny
 enm = {
@@ -143,7 +166,8 @@ enm = {
   speedx: 0,
   speedy: 0,
   f: 8,
-  count: 0
+  count: 0,
+  damage: 1
 }
 //biim
 bim1 = {
@@ -154,7 +178,9 @@ bim1 = {
   speedy: 10,
   f: 10,
   t: 0,
-  count: 0
+  count: 0,
+  damage: 1/2,
+  delay: 30
 }
 bim2 = {
   x: 100,
@@ -164,7 +190,8 @@ bim2 = {
   speedy: 0,
   f: 10,
   t: 0,
-  count: 0
+  count: 0,
+  damage: 1/2
 }
 //rocket
 rkt = {
@@ -175,7 +202,9 @@ rkt = {
   speedy: 2,
   angle: 0,
   count1: 0,
-  count2: 0
+  count2: 0,
+  damage: 40,
+  delay: 50 
 }
 //teleport
 tele1 = {
@@ -205,6 +234,15 @@ goal = {
   y:0,
   n:0
 }
+//mine : 準備中
+mine = {
+  initialx: 0,
+  x: 0,
+  y: 0,
+  damage: 50,
+  count: 0,
+  delay: 120,
+}
 
 
 //parameters
@@ -212,16 +250,19 @@ var stage = 1;
 var gravity = 0.1;
 var x_res = 0.2;
 var t_count =0;
-var limit = 150;//second
+var limit = 1500;//second
 var mapX = 0;
-var t_3 = 0; //回復時に使用する現在時間
+var t_3 = 0; //回復時に使用する現在時間　未実装
 var ishoversound = 0; //sound用
 var isfiresound = 0; //sound用
+var ispause = 0; //psuseしているかどうか 
+var ishpbar = 1; //hp,mpバーあり
+var volume = 0.2; //音量調整
 let isFunctionExecuted = true;//フラグリセット
 const controller = {};
 const BLOCK_SIZE = 39;
 const BLOCK_GAP = 1;
-const addhp = 10; //回復りょう
+const addhp = 10; //回復　未実装
 
 // 弾幕の配列を初期化
 let bullets = [];
@@ -242,19 +283,19 @@ let items = [];
 var ps = 0;
 var ps_true = 0;
 
-//get map matrix ０：空白、１：破壊可、２：npc、３：item、４：goal、５：破壊不可
+//get map matrix ０：空白、１：破壊可、２：npc、３：item、４：goal、５：破壊不可、６：npcジェネレータ、７：裏２、８：裏１
 const Matrix = [
 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,5,0,5] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,6,1,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,6,1,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,6,1,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,2,6,1,0] ,
 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,6] ,
 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,1,4] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,1,0] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,1] ,
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0] ,
-[3,0,3,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3] ,
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3] ,
+[0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ,
+[3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0] ,
 [1,1,5,5,5,5,5,5,5,5,1,1,1,1,1,1,1,1,1,1,5,5,5,5,5,5,1,0,0,0,0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,0,1,1,1,1,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,0,0,0,5,0,0,0,0,5,5,5,5,1,1,1,1] ,
 [0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,1,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0] 
 ];
@@ -277,12 +318,18 @@ for (var i = 0; i < twrN; i++){
   });
 }
 
+//sound parameters
+const audio_ctx = new AudioContext();
+let audio_buffer ;
+let audio_buffer_node ;
+var gainNode = audio_ctx.createGain();
 //load sounds
 var bombsound = new Audio('sound/bomb1.mp3');
 var cannonsound = new Audio('sound/cannon2.mp3');
 var itemsound = new Audio('sound/power-up1.mp3');
 var shotsound = new Audio('sound/shot1.mp3');
 var breaksound = new Audio('sound/blow4.mp3');
+var hit2sound = new Audio('sound/blow1.mp3');
 var firesound = new Audio('sound/magic-flame1.mp3');
 var boostsound = new Audio('sound/booster1.mp3');
 var biimsound = new Audio('sound/beamgun2.mp3');
@@ -290,39 +337,41 @@ var warpsound = new Audio('sound/enemy-advent1.mp3');
 var rocketsound = new Audio('sound/rocket-launcher1.mp3');
 var hoversound = new Audio('sound/electric-fan-high1.mp3');
 var landsound = new Audio('sound/landing1.mp3');
-//音量調整
-bombsound.volume = 0.2;
-cannonsound.volume = 0.1;
-itemsound.volume = 0.1;
-shotsound.volume = 0.1;
-breaksound.volume = 0.2;
-boostsound.volume = 0.2;
-biimsound.volume = 0.2;
-warpsound.volume = 0.2;
-rocketsound.volume = 0.2;
-hoversound.volume = 0.2;
-landsound.volume = 0.2;
-firesound.volume = 0.2;
-//追加：web audio APIによるサウンド　テスト
-const audio_ctx = new AudioContext();
-let audio_buffer = null;
-let audio_buffer_node = null;
-var gainNode = audio_ctx.createGain();
-(async () => {
-  const response = await fetch('sound/cannon2.mp3') // fetch で mp3 ファイルをダウンロードして ArrayBuffer を取得
-  const response_buffer = await response.arrayBuffer();
-  audio_buffer = await audio_ctx.decodeAudioData(response_buffer);// ArrayBuffer をデコードして AudioBuffer オブジェクトを取得
-  gainNode.connect(audio_ctx.destination);
-  gainNode.gain.value = 0.1;
-  prepareAudioBufferNode(); // 初回再生のために準備を行う
-})();
+var hitsound = new Audio('sound/machine-hit3.mp3');
 // 音源再生のために準備を行う
+function changevolume(){
+  //音量調整
+  bombsound.volume = volume;
+  cannonsound.volume = volume/2;
+  itemsound.volume = volume/2;
+  shotsound.volume = volume/2;
+  breaksound.volume = volume;
+  boostsound.volume = volume;
+  biimsound.volume = volume;
+  warpsound.volume = volume;
+  rocketsound.volume = volume;
+  hoversound.volume = volume;
+  landsound.volume = volume/2;
+  firesound.volume = volume;
+  hitsound.volume = volume;
+  hit2sound.volume = volume;
+  //追加：web audio APIによるサウンド　テスト
+  (async () => {
+    const response = await fetch('sound/cannon2.mp3') // fetch で mp3 ファイルをダウンロードして ArrayBuffer を取得
+    const response_buffer = await response.arrayBuffer();
+    audio_buffer = await audio_ctx.decodeAudioData(response_buffer);// ArrayBuffer をデコードして AudioBuffer オブジェクトを取得
+    gainNode.connect(audio_ctx.destination);
+    gainNode.gain.value = volume/2;
+    prepareAudioBufferNode(); // 初回再生のために準備を行う
+  })();
+}
 function prepareAudioBufferNode() {
   audio_buffer_node = audio_ctx.createBufferSource();
   audio_buffer_node.buffer = audio_buffer;
   audio_buffer_node.connect(gainNode)
   //audio_buffer_node.connect(audio_ctx.destination);
 }
+changevolume()
 
 // ランダムなRGB値を生成する関数
 function getRandomColor() {
@@ -367,73 +416,52 @@ function drowMap(BLOCK_MATRIX){
     for (let col = 0; col < BLOCK_MATRIX[0].length; col++) {
       const blockX = col * (BLOCK_SIZE + BLOCK_GAP) - mapX;
       const blockY = row * (BLOCK_SIZE + BLOCK_GAP);
-      if (BLOCK_MATRIX[row][col] === 1) {
+      if (BLOCK_MATRIX[row][col] === 1 && blockX<canvas.width+50 && blockX>-50) {
         backctx.globalAlpha = 1;
         backctx.fillStyle = 'gray';
         backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
       } 
       if (BLOCK_MATRIX[row][col] === 2) {
       } 
-      if (BLOCK_MATRIX[row][col] === 3) {
-        backctx.globalAlpha = 0.3;
+      if (BLOCK_MATRIX[row][col] === 3 && blockX<canvas.width+50 && blockX>-50) {
+        backctx.globalAlpha = 0.4;
         backctx.fillStyle = 'gray';
         backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+        //tank
+        backctx.fillStyle = 'gray';
+        backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+        backctx.fillStyle = 'silver';
+        backctx.fillRect(blockX-player1.radius/4+BLOCK_SIZE/2, blockY-player1.radius/4+BLOCK_SIZE/2, player1.radius/2, player1.radius/2);
+        backctx.fillStyle = 'gray';
+        backctx.fillRect(blockX-player1.radius*3/4+BLOCK_SIZE/2, blockY+player1.radius/4+BLOCK_SIZE/2, player1.radius*3/2, player1.radius/2);
+        //canond
+        backctx.beginPath();
+        backctx.moveTo(blockX+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
+        backctx.lineTo(blockX + player1.length+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
+        backctx.stroke();
+        //a,b,c
+        backctx.globalAlpha = 1;
+        backctx.fillStyle = 'white';
+        backctx.font = '24px Arial';
         if(player1.type === 0){
-          ctx.fillStyle = 'white';
-          ctx.font = '24px Arial';
-          ctx.fillText('a', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
-          backctx.fillStyle = 'gray';
-          backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
-          backctx.fillStyle = 'red';
-          backctx.fillRect(blockX-player1.radius/4+BLOCK_SIZE/2, blockY-player1.radius/4+BLOCK_SIZE/2, player1.radius/2, player1.radius/2);
-          backctx.fillStyle = 'orange';
-          backctx.fillRect(blockX-player1.radius*3/4+BLOCK_SIZE/2, blockY+player1.radius/4+BLOCK_SIZE/2, player1.radius*3/2, player1.radius/2);
-          //canond
-          backctx.beginPath();
-          backctx.moveTo(blockX+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
-          backctx.lineTo(blockX + player1.length+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
-          backctx.stroke();
-        }if(player1.type === 1){
-          ctx.fillStyle = 'white';
-          ctx.font = '24px Arial';
-          ctx.fillText('b', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
-          backctx.fillStyle = 'gray';
-          backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
-          backctx.fillStyle = 'gold';
-          backctx.fillRect(blockX-player1.radius/4+BLOCK_SIZE/2, blockY-player1.radius/4+BLOCK_SIZE/2, player1.radius/2, player1.radius/2);
-          backctx.fillStyle = 'yellow';
-          backctx.fillRect(blockX-player1.radius*3/4+BLOCK_SIZE/2, blockY+player1.radius/4+BLOCK_SIZE/2, player1.radius*3/2, player1.radius/2);
-          //canond
-          backctx.beginPath();
-          backctx.moveTo(blockX+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
-          backctx.lineTo(blockX + player1.length+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
-          backctx.stroke();
-        }if(player1.type === 2){
-          ctx.fillStyle = 'white';
-          ctx.font = '24px Arial';
-          ctx.fillText('c', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
-          backctx.fillStyle = 'gray';
-          backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
-          backctx.fillStyle = 'silver';
-          backctx.fillRect(blockX-player1.radius/4+BLOCK_SIZE/2, blockY-player1.radius/4+BLOCK_SIZE/2, player1.radius/2, player1.radius/2);
-          backctx.fillStyle = 'gray';
-          backctx.fillRect(blockX-player1.radius*3/4+BLOCK_SIZE/2, blockY+player1.radius/4+BLOCK_SIZE/2, player1.radius*3/2, player1.radius/2);
-          //canond
-          backctx.beginPath();
-          backctx.moveTo(blockX+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
-          backctx.lineTo(blockX + player1.length+BLOCK_SIZE/2, blockY+BLOCK_SIZE/2);
-          backctx.stroke();
+          backctx.fillText('a', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
+        }
+        else if(player1.type === 1){
+          backctx.fillText('b', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
+        }
+        else if(player1.type === 2){
+          backctx.fillText('c', blockX+BLOCK_SIZE/3, blockY+BLOCK_SIZE/3*2);
         }
       } 
       if (BLOCK_MATRIX[row][col] === 4) {
         goal.x=blockX; goal.y=blockY;
       } 
-      if (BLOCK_MATRIX[row][col] === 5) {
+      if (BLOCK_MATRIX[row][col] === 5 && blockX<canvas.width+50 && blockX>-50) {
         backctx.globalAlpha = 1;
         backctx.fillStyle = 'silver';
         backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
       }     
-      if (BLOCK_MATRIX[row][col] === 6){
+      if (BLOCK_MATRIX[row][col] === 6 && blockX<canvas.width+50 && blockX>-50) {
         backctx.globalAlpha = 0.1;
         backctx.fillStyle = 'red';
         backctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
@@ -457,40 +485,179 @@ function drawPlayers(){
   ctx.globalAlpha = 1;
   //bar of hp, mp
   ctx.fillStyle = 'green';
-  ctx.fillRect(player1.x-player1.radius/2, player1.y-19, player1.hp/100*player1.radius, 2);
+  ctx.fillRect(player1.x-player1.radius/2, player1.y-19, player1.hp/player1.maxhp*player1.radius, 2);
   ctx.fillStyle = 'blue';
-  ctx.fillRect(player1.x-player1.radius/2, player1.y-14, player1.mp/100*player1.radius, 2);
+  ctx.fillRect(player1.x-player1.radius/2, player1.y-14, player1.mp/player1.maxmp*player1.radius, 2);
   //draw player1
-  ctx.fillStyle = player1.headcolor;
-  ctx.fillRect(player1.x-player1.radius/4, player1.y-player1.radius/4, player1.radius/2, player1.radius/2);
-  ctx.fillStyle = player1.bodycolor;
-  ctx.fillRect(player1.x-player1.radius*3/4, player1.y+player1.radius/4, player1.radius*3/2, player1.radius/2);
-  //canon
-  ctx.beginPath();
-  ctx.moveTo(player1.x, player1.y);
-  ctx.lineTo(player1.x + Math.cos(player1.angle) * player1.length, player1.y + Math.sin(player1.angle) * player1.length);
-  ctx.stroke();
+  if(player1.type==-1){
+    ctx.strokeStyle = player1.headcolor;
+    ctx.lineWidth = 3;
+    //leg
+    if(Math.abs(player1.speedx)<1/2){
+      ctx.beginPath();
+      ctx.moveTo(player1.x, player1.y+7);
+      ctx.lineTo(player1.x, player1.y+15);
+      ctx.closePath();
+      ctx.stroke();
+    }
+    else{
+      ctx.beginPath();
+      ctx.moveTo(player1.x, player1.y+7);
+      ctx.lineTo(player1.x+3*Math.cos(t_count/10), player1.y+14-1*Math.cos(t_count/5));
+      ctx.closePath();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(player1.x, player1.y+7);
+      ctx.lineTo(player1.x-3*Math.cos(t_count/10), player1.y+14-1*Math.cos(t_count/5));
+      ctx.closePath();
+      ctx.stroke();
+    }
+    //back
+    ctx.fillStyle = player1.headcolor;
+    ctx.fillRect(player1.x-4.5, player1.y,5,8);
+    //body
+    ctx.fillStyle = player1.bodycolor;
+    ctx.fillRect(player1.x-2.5, player1.y-4.5,5,5);
+    ctx.fillRect(player1.x-3, player1.y+1,6,8);
+    //face
+    ctx.fillStyle = "#EEC8B4";
+    ctx.fillRect(player1.x, player1.y-3,2.5,2.5);
+    //arm
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(player1.x-0.5, player1.y+1.5);
+    ctx.lineTo(player1.x+Math.cos(player1.angle)*7, player1.y+2+Math.sin(player1.angle)*6);
+    ctx.closePath();
+    ctx.stroke();
+    //gun
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(player1.x+Math.cos(player1.angle+0.2)*7, player1.y+2+Math.sin(player1.angle+0.2)*6);
+    ctx.lineTo(player1.x+Math.cos(player1.angle-0.2)*7, player1.y+2+Math.sin(player1.angle-0.2)*6);
+    ctx.lineTo(player1.x+Math.cos(player1.angle-0.1)*11, player1.y+2+Math.sin(player1.angle-0.1)*10);
+    ctx.closePath();
+    ctx.stroke();
+    //hand
+    ctx.fillRect(player1.x-1+Math.cos(player1.angle)*7,player1.y+1+Math.sin(player1.angle)*6,2,2);
+
+  }
+  //Tank
+  else{
+    ctx.fillStyle = player1.headcolor;
+    ctx.fillRect(player1.x-player1.radius/4, player1.y-player1.radius/4, player1.radius/2, player1.radius/2);
+    ctx.fillStyle = player1.bodycolor;
+    ctx.fillRect(player1.x-player1.radius*3/4, player1.y+player1.radius/4, player1.radius*3/2, player1.radius/2);
+    //body
+    ctx.strokeStyle = `black`
+    ctx.fillStyle = player1.headcolor;
+    ctx.beginPath();
+    ctx.arc(player1.x-player1.radius/2-1, player1.y+player1.radius/2+2, 4, Math.PI/2,-Math.PI/2);
+    ctx.fill();
+    ctx.lineTo(player1.x+player1.radius/2+1, player1.y+player1.radius/2-2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(player1.x+player1.radius/2+1, player1.y+player1.radius/2+2, 4, -Math.PI/2,Math.PI/2);
+    ctx.fill();
+    ctx.lineTo(player1.x-player1.radius/2-1, player1.y+player1.radius/2+6);
+    ctx.stroke();
+    ctx.fillStyle = player1.bodycolor;
+    //canon
+    if(player1.grade>1){
+      if(player1.grade==2){
+        ctx.beginPath();
+        ctx.arc(player1.x, player1.y, 4, 0,Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+        ctx.strokeStyle = `rgb(${blt.damage*30},50,50)`
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(player1.x, player1.y);
+        ctx.lineTo(player1.x + Math.cos(player1.angle) * player1.length*0.8, player1.y + Math.sin(player1.angle) * player1.length*0.8);
+        ctx.stroke();
+      }
+      else if(player1.grade==3){
+        ctx.beginPath();
+        ctx.arc(player1.x, player1.y, 4, player1.angle+Math.PI/2,player1.angle-Math.PI/2);
+        ctx.fill();
+        ctx.closePath();
+        ctx.stroke();
+        ctx.strokeStyle = `rgb(${blt.damage*30},0,50)`
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(player1.x -Math.sin(player1.angle)*2.5, player1.y +Math.cos(player1.angle)*2.5);
+        ctx.lineTo(player1.x -Math.sin(player1.angle)*2.5+ Math.cos(player1.angle) * player1.length*0.7, player1.y +Math.cos(player1.angle)*2.5+ Math.sin(player1.angle) * player1.length*0.7);
+        ctx.stroke(); 
+      }
+      else{
+        ctx.beginPath();
+        ctx.arc(player1.x, player1.y, 4, player1.angle+Math.PI/2,player1.angle-Math.PI/2);
+        ctx.fill();
+        ctx.closePath();
+        ctx.stroke();
+        ctx.strokeStyle = `rgb(${blt.damage*30},0,50)`
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        sin=Math.sin(player1.angle)*2.5;
+        cos=Math.cos(player1.angle)*2.5;
+        ctx.moveTo(player1.x -sin, player1.y +cos);
+        ctx.lineTo(player1.x -sin+ Math.cos(player1.angle) * player1.length*0.8, player1.y +cos+ Math.sin(player1.angle) * player1.length*0.8);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(player1.x+sin, player1.y-cos);
+        ctx.lineTo(player1.x+sin + Math.cos(player1.angle) * player1.length*0.6, player1.y-cos + Math.sin(player1.angle) * player1.length*0.6);
+        ctx.stroke();
+        //for calculate process speed
+        ps++;
+      }
+    }
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = `rgb(${blt.damage*30},0,0)`
+    ctx.beginPath();
+    ctx.moveTo(player1.x, player1.y);
+    ctx.lineTo(player1.x + Math.cos(player1.angle) * player1.length, player1.y + Math.sin(player1.angle) * player1.length);
+    ctx.stroke();
+  }
+  //drones
+  if(player1.drone>0){
+    ctx.strokeStyle = `black`
+    ctx.fillStyle = player1.headcolor;
+    for (var i = 0; i < player1.drone+1; i++){
+      sin=Math.sin(Math.PI/player1.drone*i*2+t_count/100)
+      cos=Math.cos(Math.PI/player1.drone*i*2+t_count/100)
+      ctx.beginPath();
+      ctx.arc(player1.x-sin*20, player1.y+cos*10, 3, player1.angle+Math.PI/2,player1.angle-Math.PI/2);
+      ctx.fill();
+      ctx.moveTo(player1.x-sin*20, player1.y+cos*10);
+      ctx.lineTo(player1.x-sin*20+ Math.cos(player1.angle)*7, player1.y+cos*10+ Math.sin(player1.angle)*7);
+      ctx.closePath();
+      ctx.stroke();
+      //for calculate process speed
+      ps++;
+    }
+  }
+
   //抵抗
   if(player1.speedx>0.1){
       player1.speedx-=player1.speedx/3*x_res;
-      if(player1.speedx>5){
+      if(player1.speedx>player1.spe){
       player1.speedx-=10*x_res;
       }
   }
   else if(player1.speedx<-0.1){
-      if(player1.speedx<-5){
+      if(player1.speedx<-player1.spe){
       player1.speedx+=10*x_res;
       }
       player1.speedx-=player1.speedx/3*x_res;
   }
   else{player1.speedx=0}
   //画面移動
-  if(player1.x < canvas.width/3){
+  if(player1.x <= canvas.width/3){
     player1.x = canvas.width/3
     mapX += player1.speedx;
     drowMap(Matrix)
   }
-  else if(player1.x > canvas.width*2/3){
+  else if(player1.x >= canvas.width*2/3){
     player1.x = canvas.width/3*2
     mapX += player1.speedx;
     drowMap(Matrix)
@@ -500,17 +667,12 @@ function drawPlayers(){
     player1.x += player1.speedx;
   }
 
-  //画面外ループ
-  if(player1.x < -9){
-    player1.x = canvas.width+15;
-  }
-  if(player1.x > canvas.width+15){
-    player1.x = -9;
-  }
   //player移動
   player1.y += player1.speedy;
   //重力
   player1.speedy += gravity;
+  //for calculate process speed
+  ps++;
 }
 //npc描写と動作とアルゴリズム
 function drawNplayer(){
@@ -528,11 +690,20 @@ function drawNplayer(){
       ctx.fillRect(npc.x-npc.radius/4, npc.y-npc.radius/4, npc.radius/2, npc.radius/2);
       ctx.fillStyle = nplayer.bodycolor;
       ctx.fillRect(npc.x-npc.radius*3/4, npc.y+npc.radius/4, npc.radius*3/2, npc.radius/2);
+      //body
+      ctx.fillStyle = nplayer.headcolor;
+      ctx.beginPath();
+      ctx.arc(npc.x-npc.radius/2-1, npc.y+npc.radius/2+2, 4, 0,Math.PI*2);
+      ctx.arc(npc.x+npc.radius/2+1, npc.y+npc.radius/2+2, 4, 0,Math.PI*2);
+      ctx.fill();
       //canon
+      ctx.strokeStyle = `black`
       ctx.beginPath();
       ctx.moveTo(npc.x, npc.y);
       ctx.lineTo(npc.x + Math.cos(npc.angle) * nplayer.length, npc.y + Math.sin(npc.angle) * nplayer.length);
-      ctx.stroke();
+      ctx.stroke();  
+      //for calculate process speed
+      ps++;
     }
   });
   npcs = npcs.filter(npc => {
@@ -631,16 +802,18 @@ function drawNplayer(){
 // 弾幕を描画と動作
 function drawBullet(){
   ctx.fillStyle = player1.headcolor;
-    ctx.globalAlpha = 0.2;
-    bullets.forEach(bullet => {
-      bullet.x=bullet.initialx-mapX
-      bullet.hp += 1;
-      ctx.beginPath();
-      ctx.arc(bullet.x, bullet.y, bullet.width, 0,Math.PI * 2);
-      ctx.fill();
-      ctx.closePath();
-    });
-    ctx.globalAlpha = 1;
+  ctx.globalAlpha = 0.2;
+  bullets.forEach(bullet => {
+    bullet.x=bullet.initialx-mapX
+    bullet.hp += 1;
+    ctx.beginPath();
+    ctx.arc(bullet.x, bullet.y, bullet.width, 0,Math.PI * 2);
+    ctx.fill();
+    ctx.closePath();
+    //for calculate process speed
+    ps++;
+  });
+  ctx.globalAlpha = 1;
   // 弾幕を移動
   bullets = bullets.filter(bullet => {
     bullet.speedY += gravity;
@@ -660,6 +833,8 @@ function drawEnemy(){
       ctx.arc(enemy.x, enemy.y, enemy.width, 0,Math.PI * 2);
       ctx.fill();
       ctx.closePath();
+    //for calculate process speed
+    ps++;
     });
     ctx.globalAlpha = 1;
   // 弾幕を移動
@@ -680,6 +855,8 @@ function drawBiim(){
     ctx.arc(biim1.x, biim1.y, biim1.width, 0,Math.PI * 2);
     ctx.fill();
     ctx.closePath();
+    //for calculate process speed
+    ps++;
   });
   ctx.globalAlpha = 1;
   biim1s = biim1s.filter(biim1 => {
@@ -695,6 +872,8 @@ function drawBiim(){
     ctx.arc(biim2.x, biim2.y, biim2.width, 0,Math.PI * 2);
     ctx.fill();
     ctx.closePath();
+    //for calculate process speed
+    ps++;
   });
   ctx.globalAlpha = 1;
   biim2s = biim2s.filter(biim2 => {
@@ -706,22 +885,25 @@ function drawBiim(){
 //rocket描画と動作
 function drawRocket(){
   ctx.fillStyle = 'gray'; 
-    ctx.globalAlpha = 0.4; 
-    rockets.forEach(rocket => {
-      rocket.x=rocket.initialx-mapX;
-      ctx.moveTo(rocket.x,rocket.y);
-      ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle) ,rocket.y-2*rocket.width*Math.sin(rocket.angle));
-      ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle+Math.PI/6) ,rocket.y-2*rocket.width*Math.sin(rocket.angle+Math.PI/6));
-      ctx.lineTo(rocket.x+2*rocket.width*Math.cos(rocket.angle-Math.PI/6) ,rocket.y+2*rocket.width*Math.sin(rocket.angle-Math.PI/6));
-      ctx.lineTo(rocket.x+3*rocket.width*Math.cos(rocket.angle) ,rocket.y+3*rocket.width*Math.sin(rocket.angle));
-      ctx.lineTo(rocket.x+2*rocket.width*Math.cos(rocket.angle+Math.PI/6) ,rocket.y+2*rocket.width*Math.sin(rocket.angle+Math.PI/6));
-      ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle-Math.PI/6) ,rocket.y-2*rocket.width*Math.sin(rocket.angle-Math.PI/6));
-      ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle) ,rocket.y-2*rocket.width*Math.sin(rocket.angle));
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke()
-    });
-    ctx.globalAlpha = 1;
+  ctx.globalAlpha = 0.4; 
+  ctx.strokeStyle = 'black'
+  rockets.forEach(rocket => {
+    rocket.x=rocket.initialx-mapX;
+    ctx.moveTo(rocket.x,rocket.y);
+    ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle) ,rocket.y-2*rocket.width*Math.sin(rocket.angle));
+    ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle+Math.PI/6) ,rocket.y-2*rocket.width*Math.sin(rocket.angle+Math.PI/6));
+    ctx.lineTo(rocket.x+2*rocket.width*Math.cos(rocket.angle-Math.PI/6) ,rocket.y+2*rocket.width*Math.sin(rocket.angle-Math.PI/6));
+    ctx.lineTo(rocket.x+3*rocket.width*Math.cos(rocket.angle) ,rocket.y+3*rocket.width*Math.sin(rocket.angle));
+    ctx.lineTo(rocket.x+2*rocket.width*Math.cos(rocket.angle+Math.PI/6) ,rocket.y+2*rocket.width*Math.sin(rocket.angle+Math.PI/6));
+    ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle-Math.PI/6) ,rocket.y-2*rocket.width*Math.sin(rocket.angle-Math.PI/6));
+    ctx.lineTo(rocket.x-2*rocket.width*Math.cos(rocket.angle) ,rocket.y-2*rocket.width*Math.sin(rocket.angle));
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke()
+    //for calculate process speed
+    ps++;
+  });
+  ctx.globalAlpha = 1;
   // 弾幕を移動
   rockets = rockets.filter(rocket => {
     rocket.initialx += rocket.speedX;
@@ -732,18 +914,49 @@ function drawRocket(){
 }
 //item描画と動作
 function drawItem(){
+  //描画
   items.forEach(item => {
-    //speed boost
-    if(itm.type == 1){
-
-    }
+    item.x=item.initialx-mapX;
     //
-    if(itm.type == 2){
-
+    if(item.type == 0){
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = 'black';
+      ctx.fillRect(item.x, item.y, BLOCK_SIZE/2, BLOCK_SIZE/2);
+      ctx.fillStyle = 'white';
+      ctx.font = '8px Arial';
+      ctx.fillText(' +1 ',item.x, item.y+BLOCK_SIZE/4);
+      ctx.fillText('drone',item.x, item.y+16);
+    }
+    if(item.type == 1){
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = 'green';
+      ctx.fillRect(item.x, item.y, BLOCK_SIZE/2, BLOCK_SIZE/2);
+      ctx.fillStyle = 'white';
+      ctx.font = '10px Arial';
+      ctx.fillText('+50',item.x, item.y+BLOCK_SIZE/3);     
+    }
+    if(item.type == 2){
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = 'yellow';
+      ctx.beginPath();
+      ctx.arc(item.x+BLOCK_SIZE/4, item.y+BLOCK_SIZE/4, 10, 0,Math.PI * 2);
+      ctx.fill();
+      ctx.closePath();
+      ctx.fillStyle = 'white';
+      ctx.font = '12px Arial';
+      ctx.fillText('+10',item.x, item.y+14);  
     }
   });
+  // 移動と削除
+  items = items.filter(item => {
+    item.initialx += item.speedx;
+    item.y += item.speedy;
+    //for calculate process speed
+    ps++;
+    //画面外ループしない
+  return item.x > -100 && item.x < canvas.width+100 && item.y > -100 && item.y < canvas.height+100;
+  }); 
 }
-
 //goalの描画
 function drawgoal(){
   ctx.globalAlpha = 0.2;
@@ -761,11 +974,15 @@ function drawgoal(){
     ctx.arc(goal.x + BLOCK_SIZE/2 + (t_count%40/2)*Math.cos(i*Math.PI/5+t_count/10), goal.y + BLOCK_SIZE/2 + (t_count%40/2)*Math.sin(i*Math.PI/5+t_count/10), t_count%40/10, 0,Math.PI * 2);
     ctx.fill();
     ctx.closePath();
+    //for calculate process speed
+    ps++;
   }
 }
 
 //ギミック
-function Rain(t){
+function Rain(t){  
+  //for calculate process speed
+  ps++;
   if(t_count > t*60 && t_count < (t+30)*60){
     ctx.fillStyle = 'black';
     ctx.globalAlpha = 0.5-Math.abs(t+15-t_count/60)/30;
@@ -802,11 +1019,12 @@ function Rain(t){
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height)
         ctx.globalAlpha = 0.5;
-        ctx.fillRect(rain.x1-5, 0, 10, canvas.height);
+        ctx.fillRect(rain.x1-5-mapX, 0, 10, canvas.height);
         ctx.fillStyle = 'yellow';
-        ctx.fillRect(rain.x1-10, 0, 20, canvas.height);
-        if(player1.x+player1.radius/2>rain.x1-10 && player1.x-player1.radius/2<rain.x1+10){
-          player1.hp-=5;
+        ctx.fillRect(rain.x1-10-mapX, 0, 20, canvas.height);
+        if(player1.x+player1.radius/2>rain.x1-10-mapX && player1.x-player1.radius/2<rain.x1+10-mapX){
+          player1.hp-=10;
+          player1.result+=10;
         }
         /* 雲の描画　不要
         for (let i = 0; i < rain.x2.length; i++){
@@ -825,11 +1043,11 @@ function Rain(t){
       }
       else if(t_count < t*60+31*30) {
         ctx.globalAlpha = 0.1;
-        rain.x1 = player1.x;
+        rain.x1 = player1.x+mapX;
         ctx.fillStyle = 'white';
-        ctx.fillRect(rain.x1-5, 0, 10, canvas.height);
+        ctx.fillRect(rain.x1-5-mapX, 0, 10, canvas.height);
         ctx.fillStyle = 'yellow';
-        ctx.fillRect(rain.x1-2, 0, 4, canvas.height);
+        ctx.fillRect(rain.x1-2-mapX, 0, 4, canvas.height);
         /*　npcに雷当たるやつ
         npcs.forEach((npc, npcIndex) => {
           rain.x2.push(npc.x);
@@ -844,7 +1062,7 @@ function Rain(t){
       }
       else{
         ctx.fillStyle = 'yellow';
-        ctx.fillRect(rain.x1-2, 0, 4, canvas.height);
+        ctx.fillRect(rain.x1-2-mapX, 0, 4, canvas.height);
         /* npc用
         for (let i = 0; i < rain.x2.length; i++){
           ctx.fillRect(rain.x2[i]-2, 0, 4, canvas.height);
@@ -892,6 +1110,7 @@ function generateNplayer(){
 function generateItem(){
   items.push({
     type: itm.type,
+    initialx: itm.x+mapX,
     x: itm.x,
     y: itm.y,
     speedx: itm.speedx,
@@ -899,7 +1118,6 @@ function generateItem(){
     count: itm.count
   });
 }
-
 //shoot
 function shootBullet(){            
   bullets.push({
@@ -955,7 +1173,7 @@ function shootRocket(){
     hp: 40
   })};
 
-//跳ね返り
+//跳ね返りblock player当たり判定
 function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
   for (let row = 0; row < BLOCK_MATRIX.length; row++) {
     const rowLength = BLOCK_MATRIX[row].length;
@@ -1000,7 +1218,6 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
         }//右       
         //for calculate process speed
         ps++;
-
         //npc跳ね返り
         npcs.forEach((npc, npcIndex) => {
           if(npc.x + npc.radius/4 > blockX && npc.x - npc.radius/4< blockX + BLOCK_SIZE){
@@ -1033,7 +1250,6 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           //for calculate process speed
           ps++;
         });   
-
         //Bullet
         bullets.forEach((bullet, bulletIndex) => {
           if(bullet.x + bullet.width/4 > blockX && bullet.x - bullet.width/4< blockX + BLOCK_SIZE){
@@ -1062,7 +1278,6 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
         //for calculate process speed
         ps++;
         });
-
         //Enemy
         enemys.forEach((enemy, enemyIndex) => {
           if(enemy.x + enemy.width/4 > blockX && enemy.x - enemy.width/4< blockX + BLOCK_SIZE){
@@ -1091,13 +1306,12 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
         //for calculate process speed
         ps++;
         });
-      
         //Rocket
         rockets.forEach((rocket, rocketIndex) => {
           if (rocket.x + rocket.width > blockX && rocket.x - rocket.width< blockX + BLOCK_SIZE &&
               rocket.y + rocket.width > blockY && rocket.y - rocket.width< blockY + BLOCK_SIZE) {
             // ブロックを破壊
-            BLOCK_MATRIX[row][col] = 0;
+            BLOCK_MATRIX[row][col] = 8;
             for (var i = 0; i < 20; i++) {
               enm.x = blockX + BLOCK_SIZE/2 + 10*Math.cos(i*Math.PI/10);
               enm.y = blockY + BLOCK_SIZE/2 + 10*Math.sin(i*Math.PI/10);
@@ -1135,21 +1349,38 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           itemsound.pause();
           itemsound.currentTime = 0; // 再生位置をリセット
           itemsound.play(); // サウンドを再生
+          //erase block
           BLOCK_MATRIX[row][col] = 0;
+          //map redraw
+          drowMap(Matrix);
           if(player1.type === 0){
             player1.type=1; 
-            player1.headcolor='red'; 
-            player1.bodycolor='orange'}
+            player1.headcolor='darkviolet'; 
+            player1.bodycolor='indigo'}
           else if(player1.type === 1){
             player1.type=2; 
-            player1.headcolor='gold'; 
-            player1.bodycolor='yellow'}
+            player1.headcolor='silver'; 
+            player1.bodycolor='dimgray'}
           else if(player1.type === 2){
             player1.type=0; 
-            player1.headcolor='silver'; 
-            player1.bodycolor='gray'}
-        }       
-        drowMap(Matrix);
+            player1.headcolor='olive'; 
+            player1.bodycolor='darkolivegreen'}
+          else if(player1.type === -1){
+            player1.type=0; 
+            player1.headcolor='olive'; 
+            player1.bodycolor='darkolivegreen'
+            //restatus
+            player1.maxhp=100;
+            player1.hp=100;
+            player1.hpgain=1/30;
+            player1.maxmp=100;
+            player1.mp=100;
+            player1.mpgain=1/2;
+            player1.spe=4.5;
+          }
+          //status
+          drawstatus();   
+        }    
         //for calculate process speed
         ps++;
       }
@@ -1158,8 +1389,8 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           player1.hp=-100
           goal.n=1;
         }
-      //for calculate process speed
-      ps++;
+        //for calculate process speed
+        ps++;
       }
       if (BLOCK_MATRIX[row][col] === 5 && blockX<canvas.width+150 && blockX>-100){
         //player1跳ね返り
@@ -1378,11 +1609,17 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
         //for calculate process speed
         ps++;
         });
-
-
       }
       if (BLOCK_MATRIX[row][col] === 7 && (blockX>canvas.width+150 || blockX<-100)){
         BLOCK_MATRIX[row][col] = 2;
+      }
+      if (BLOCK_MATRIX[row][col] === 8 && t_count%60==0){
+        if(Math.random()<1/6){
+          //regenerate block1
+          BLOCK_MATRIX[row][col] = 1;
+          //map redraw
+          drowMap(Matrix);
+        }
       }
     } 
   }
@@ -1401,13 +1638,28 @@ function playerCollision(){
       player1.speedy = (player1.y-npc.y)/10;
       npc.speedx = -player1.speedx;
       npc.speedy = -player1.speedy;
-    //for calculate process speed
-    ps++;
+      //damage
+      player1.hp -= 4;
+      npc.hp -= 4;
+      player1.result+=4;
+      player1.taken+=4;
+      if(player1.type==-1){
+        hit2sound.pause();
+        hit2sound.currentTime = 0; // 再生位置をリセット
+        hit2sound.play(); // サウンドを再生
+      }
+      else{
+        hitsound.pause();
+        hitsound.currentTime = 0; // 再生位置をリセット
+        hitsound.play(); // サウンドを再生
+      }
+      //for calculate process speed
+      ps++;
     }
   });
 }
 
-//当たり判定  
+//player弾当たり判定  
 function playerBltEnm(){
   //bullet-npc
   bullets.forEach((bullet, bulletIndex) => {
@@ -1423,13 +1675,12 @@ function playerBltEnm(){
         ctx.fillStyle = 'orange'; 
         ctx.fillRect(npc.x - npc.radius/2, npc.y - npc.radius/4, npc.radius, npc.radius);
         ctx.globalAlpha = 1;
-        player1.result+=1;
         npc.speedx -= (bullet.x - npc.x)/120;
         npc.speedy -= (bullet.y - npc.y)/120;
         if(npc.hp>=0){
-          npc.hp-=1;
+          npc.hp-=blt.damage;
+          player1.result+=blt.damage;
         }
-
         //for calculate process speed
         ps++;
       }
@@ -1448,19 +1699,16 @@ function playerBltEnm(){
       ctx.fillStyle = 'orange'; 
       ctx.fillRect(player1.x - player1.radius/2, player1.y - player1.radius/4, player1.radius, player1.radius);
       ctx.globalAlpha = 1;
-      nplayer.result+=1;
       player1.speedx -= (enemy.x - player1.x)/120;
       player1.speedy -= (enemy.y - player1.y)/120;
       if(player1.hp>=0){
-        player1.hp-=1;
+        player1.hp -= enm.damage;
+        player1.taken += enm.damage;
       }
-
       //for calculate process speed
       ps++;
     }
   });
-  //rocket-players
-
 }
 function playerBim(){
   //biim1-npc
@@ -1477,11 +1725,11 @@ function playerBim(){
         ctx.fillStyle = 'orange'; 
         ctx.fillRect(npc.x - npc.radius/2, npc.y - npc.radius/4, npc.radius, npc.radius);
         ctx.globalAlpha = 1;
-        player1.result+=0.5;
         npc.speedx -= (biim1.x - npc.x)/1000;
         npc.speedy -= (biim1.y - npc.y)/1000;
         if(npc.hp>=0){
-          npc.hp-=0.5;
+          npc.hp -= bim1.damage;
+          player1.result+=bim1.damage;
         }
       //for calculate process speed
       ps++;
@@ -1501,11 +1749,11 @@ function playerBim(){
       ctx.fillStyle = 'orange'; 
       ctx.fillRect(player1.x - player1.radius/2, player1.y - player1.radius/4, player1.radius, player1.radius);
       ctx.globalAlpha = 1;
-      player1.taken+=0.25;
       player1.speedx -= (biim2.x - player1.x)/1000;
       player1.speedy -= (biim2.y - player1.y)/1000;
       if(player1.hp>=0){
-        player1.hp-=0.25;
+        player1.hp -= bim2.damage;
+        player1.taken += bim2.damage;
       }
     //for calculate process speed
     ps++;
@@ -1605,21 +1853,34 @@ function playerRocket(){
         ctx.fillStyle = 'orange'; 
         ctx.fillRect(npc.x - npc.radius/2, npc.y - npc.radius/4, npc.radius, npc.radius);
         ctx.globalAlpha = 1;
-        player1.result+=1/4;
-        npc.x = rocket.x;
-        npc.y = rocket.y;
+        npc.speedx = 3*rkt.speedx;
+        npc.speedy = 3*rkt.speedy;
         if(npc.hp>=0){
-          npc.hp-=3;
+          npc.hp -= rkt.damage;
+          player1.result+=rkt.damage;
         }
-        var i = Math.random();
-        bim2.x = npc.x + 15*Math.cos(2*i*Math.PI);
-        bim2.y = npc.y + 15*Math.sin(2*i*Math.PI);
-        bim2.radius = 3
-        bim2.speedx = 4*Math.cos(2*i*Math.PI);
-        bim2.speedy = 4*Math.sin(2*i*Math.PI);
-        shootBiim2();
-      //for calculate process speed
-      ps++;
+        // 弾を削除
+        for (var i = 0; i < 20; i++) {
+          enm.x = rocket.x + 10*Math.cos(i*Math.PI/10);
+          enm.y = rocket.y + 10*Math.sin(i*Math.PI/10);
+          enm.radius = 3
+          enm.speedx = 3*Math.cos(i*Math.PI/10);
+          enm.speedy = 3*Math.sin(i*Math.PI/10);
+          shootEnemy();
+          blt.x = rocket.x ;
+          blt.y = rocket.y ;
+          blt.radius = 3
+          blt.speedx = 3*Math.cos(i*Math.PI/10 + Math.PI/20);
+          blt.speedy = 3*Math.sin(i*Math.PI/10 + Math.PI/20);
+          shootBullet();
+        }
+        breaksound.pause();
+        breaksound.currentTime = 0; // 再生位置をリセット
+        breaksound.play(); // サウンドを再生
+        //delete rocket
+        rockets.splice(rocketIndex, 1);
+        //for calculate process speed
+        ps++;
       }
     });
   });
@@ -1742,6 +2003,40 @@ function rocketBltEnmBim(){
     });
   });
 }
+function playerItem(){
+  items.forEach((item, itemIndex) => {
+    //当たり判定
+    if(
+      item.x < player1.x + player1.radius/2 &&
+      item.x + BLOCK_SIZE/2 > player1.x - player1.radius/2 &&
+      item.y < player1.y + player1.radius*3/4 &&
+      item.y + BLOCK_SIZE/2 > player1.y - player1.radius/4
+    ){
+      //削除
+      items.splice(itemIndex, 1);
+      //power up
+      if(item.type == 0){
+        player1.drone+=1;
+        //status
+        drawstatus();
+      }
+      //recover
+      if(item.type == 1){
+        if(player1.hp>player1.maxhp-50){player1.hp=player1.maxhp}else{player1.hp+=50}
+      }
+      //plus one cannon
+      if(item.type == 2 && player1.state*10<player1.expcap){
+        player1.state+=1;
+        //status
+        drawstatus();
+      }
+      //sound
+      itemsound.pause();
+      itemsound.currentTime = 0; // 再生位置をリセット
+      itemsound.play(); // サウンドを再生
+    }
+  });
+}
 
 //controll key
 function controll(){
@@ -1753,8 +2048,9 @@ function controll(){
   //new control system
   if(controller['ShiftLeft']){
     if(player1.type === 0){superbullet()}
-    if(player1.type === 1){biimshot()}
-    if(player1.type === 2){bombrocket()}
+    else if(player1.type === 1){biimshot()}
+    else if(player1.type === 2){bombrocket()}
+    else if(player1.type === -1){gunshot()}
   }
   //KeyF
   if(player1.type === 2){
@@ -1866,7 +2162,7 @@ function controll(){
         player1.speedy=2;
       }
       player1.y-=1;
-      player1.speedy -= 3;
+      player1.speedy -= (player1.spe+1)/2;
       player1.jump1-=1;
       player1.mp-=10;
       bim1.t = 30
@@ -1883,7 +2179,7 @@ function controll(){
       }
     }
     else if(player1.jump2>0 && player1.jump1>0){
-      player1.speedy -=3;
+      player1.speedy -= (player1.spe+1)/2;
       player1.jump1-=1;
       player1.mp-=5;
       bim1.t = 30
@@ -1969,13 +2265,13 @@ function controll(){
   }
   if(controller['KeyD'] && player1.mp>0){
     player1.mp-=0.3;
-    player1.x += 1;
-    player1.speedx += 0.3;
+    player1.x += player1.spe/5;
+    player1.speedx += player1.spe*0.06;
   }
   if(controller['KeyA'] && player1.mp>0){
     player1.mp-=0.3;
-    player1.x -= 1;
-    player1.speedx -= 0.2;
+    player1.x -= player1.spe/5;
+    player1.speedx -= player1.spe*0.06;
   }
   if(controller['KeyC']){
     player1.angle-=Math.PI/180;
@@ -2004,51 +2300,117 @@ function controll(){
     ctx.stroke();
     ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
   }
-}
-
-//for game start and restart
-function handleKeyPress(event) {
-  if (event.code === "Space" && !isFunctionExecuted){
-    if(player1.hp<1){
-      location.reload();
+  //強制退去　隠しキー
+  if(controller['KeyM']){
+    if(player1.mp>50){
+      player1.mp-=50;
+      bim1.t = 10;
+      for (var i = 0; i < 100; i++) {
+        bim1.x = player1.x;
+        bim1.y = player1.y;
+        bim1.radius = 3;
+        bim1.speedx = -3*Math.sin(i/50*Math.PI);
+        bim1.speedy = 3*Math.cos(i/50*Math.PI);
+        shootBiim1();
+      }
+      npcs.forEach(npc => {
+        if(npc.x>0 && npc.x<canvas.width){
+          npc.hp=1
+            for (var i = 0; i < 30; i++) {
+            blt.f = 3;
+            blt.x = npc.x;
+            blt.y = npc.y;
+            blt.radius = 3
+            blt.speedx = blt.f*Math.cos(i*Math.PI/15);
+            blt.speedy = blt.f*Math.sin(i*Math.PI/15);
+            shootBullet();
+          }
+        }
+      })
     }
-  }
-  if (event.code === "Space" && isFunctionExecuted) {
-    isFunctionExecuted = false; // フラグをtrue→二度実行されない
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    backctx.clearRect(0, 0, canvas.width, canvas.height);
-    //sound
-    audio_buffer_node.start(0); // オーディオを再生
-    prepareAudioBufferNode(); // 次回の再生のために準備を行う 
-    //main
-    drowMap(Matrix);
-    gameLoop();
   }
 }
 
 //shot and special moves
+function gunshot(){
+  if(player1.mp>0){bim1.t = 45
+    if(bim1.count>bim1.delay/3){
+      shotsound.pause();
+      shotsound.currentTime = 0; // 再生位置をリセット
+      shotsound.play(); // サウンドを再生
+      //弾
+      bim1.radius = 2.5;
+      for (var i = 0; i < 3; i++) {
+        bim1.x = player1.x + 11*Math.cos(player1.angle);
+        bim1.y = player1.y + 11*Math.sin(player1.angle);
+        bim1.speedx = (i/6+6)*Math.cos(player1.angle);
+        bim1.speedy = (i/6+6)*Math.sin(player1.angle);
+        shootBiim1();
+      }
+      bim1.count-=bim1.delay/3;
+      /* 無反動
+      player1.speedx -= Math.cos(player1.angle)/6;
+      player1.speedy -= Math.sin(player1.angle)/6;
+      */
+    }
+    else{
+      player1.mp-=13/bim1.delay;
+      bim1.count+=1;
+    }
+  } 
+  if(player1.drone>0){
+    if(t_count%Math.ceil(bim1.delay/player1.drone)==0){
+      shotsound.pause();
+      shotsound.currentTime = 0; // 再生位置をリセット
+      shotsound.play(); // サウンドを再生
+      //弾
+      bim1.x = player1.x - 20*Math.sin(t_count/100+Math.PI*2*t_count/bim1.delay);
+      bim1.y = player1.y + 8*Math.cos(t_count/100+Math.PI*2*t_count/bim1.delay);
+      bim1.radius = 2.5;
+      bim1.speedx = 5*Math.cos(player1.angle);
+      bim1.speedy = 5*Math.sin(player1.angle);
+      for (var i = 0; i < 3; i++) {
+        shootBiim1();
+      }
+    }
+  }
+}
 function superbullet(){
   if(player1.mp>0){
-  if(blt.count>14 && player1.mp>=10){
-    //cannonsound.pause();
-    //cannonsound.currentTime = 0; // 再生位置をリセット
-    //cannonsound.play(); // サウンドを再生
-    audio_buffer_node.start(0); // オーディオを再生
-    prepareAudioBufferNode(); // 次回の再生のために準備を行う
-    //弾
-    blt.f = 8;
-    blt.x = player1.x + (20)*Math.cos(player1.angle);
-    blt.y = player1.y + (20)*Math.sin(player1.angle);
-    blt.radius = 5;
-    blt.speedx = blt.f*Math.cos(player1.angle);
-    blt.speedy = blt.f*Math.sin(player1.angle);
-    for (var i = 0; i < 20; i++){
-    shootBullet();}
-    player1.speedx -= Math.cos(player1.angle)/4;
-    player1.speedy -= Math.sin(player1.angle)/4;
-    blt.count=0;
-    player1.mp-=10;
-  }}
+    if(blt.count>blt.delay && player1.mp>=20){
+      audio_buffer_node.start(0); // オーディオを再生
+      prepareAudioBufferNode(); // 次回の再生のために準備を行う
+      //弾
+      blt.f = 8;
+      blt.x = player1.x + (20)*Math.cos(player1.angle);
+      blt.y = player1.y + (20)*Math.sin(player1.angle);
+      blt.radius = 5;
+      blt.speedx = blt.f*Math.cos(player1.angle);
+      blt.speedy = blt.f*Math.sin(player1.angle);
+      for (var i = 0; i < 20; i++){
+      shootBullet();}
+      player1.speedx -= Math.cos(player1.angle)/4;
+      player1.speedy -= Math.sin(player1.angle)/4;
+      blt.count=0;
+      player1.mp-=20;
+    }
+  }
+  if(player1.drone>0){
+    if(t_count%Math.ceil(blt.delay*4/player1.drone)==0){
+      cannonsound.pause();
+      cannonsound.currentTime = 0; // 再生位置をリセット
+      cannonsound.play(); // サウンドを再生
+      //弾
+      blt.f = 6;
+      blt.x = player1.x - (20)*Math.sin(t_count/100+Math.PI*2*t_count/bim1.delay);
+      blt.y = player1.y + (8)*Math.cos(t_count/100+Math.PI*2*t_count/bim1.delay);
+      blt.radius = 5;
+      blt.speedx = blt.f*Math.cos(player1.angle);
+      blt.speedy = blt.f*Math.sin(player1.angle);
+      for (var i = 0; i < 10; i++){
+      shootBullet();}
+    }
+  }
 }
 function shield(){
   if(player1.mp>0){
@@ -2073,10 +2435,12 @@ function shield(){
         dx= npc.x-player1.x
         dy= npc.y-player1.y
         d2=dx**2+dy**2
-        npc.speedx = 500*dx/d2;
+        npc.speedx = 1000*dx/d2;
         npc.speedy = 500*dy/d2;
         //damage
-        npc.hp-=30000/d2
+        damage=30000/d2;
+        npc.hp-=damage;
+        player1.result+=damage;
         //for calculate process speed
         ps++;
       });
@@ -2118,62 +2482,98 @@ function superbiim(){
 }
 function biimshot(){
   if(player1.mp>0){bim1.t = 150
-  if(bim1.count>10){
-    shotsound.pause();
-    shotsound.currentTime = 0; // 再生位置をリセット
-    shotsound.play(); // サウンドを再生
-    for (var i = 0; i < 20; i++) {
-      bim1.x = player1.x + 25*Math.cos(player1.angle);
-      bim1.y = player1.y + 25*Math.sin(player1.angle);
-      bim1.radius = i/5+1
-      bim1.speedx = (i/20+4)*Math.cos(player1.angle);
-      bim1.speedy = (i/20+4)*Math.sin(player1.angle);
-      shootBiim1();
+    if(bim1.count>bim1.delay){
+      shotsound.pause();
+      shotsound.currentTime = 0; // 再生位置をリセット
+      shotsound.play(); // サウンドを再生
+      for (var i = 0; i < 20; i++) {
+        bim1.x = player1.x + 25*Math.cos(player1.angle);
+        bim1.y = player1.y + 25*Math.sin(player1.angle);
+        bim1.radius = i/5+1
+        bim1.speedx = (i/20+4)*Math.cos(player1.angle);
+        bim1.speedy = (i/20+4)*Math.sin(player1.angle);
+        shootBiim1();
+      }
+      bim1.count-=bim1.delay;
+      /* 無反動
+      player1.speedx -= Math.cos(player1.angle)/6;
+      player1.speedy -= Math.sin(player1.angle)/6;
+      */
     }
-    bim1.count-=10;
-    player1.speedx -= Math.cos(player1.angle)/6;
-    player1.speedy -= Math.sin(player1.angle)/6;
+    else{
+      player1.mp-=20/bim1.delay;
+      bim1.count+=1;
+      ctx.beginPath();
+      ctx.fillStyle = player1.headcolor;
+      ctx.globalAlpha = bim1.count/bim1.delay*0.6;
+      ctx.arc(player1.x + 25*Math.cos(player1.angle), player1.y + 25*Math.sin(player1.angle), bim1.count/bim1.delay*5, 0,Math.PI * 2);
+      ctx.fill();
+      ctx.closePath();
+      ctx.globalAlpha = 1;
+    }
+  } 
+  if(player1.drone>0){
+    if(t_count%Math.ceil(bim1.delay*4/player1.drone)==0){
+      shotsound.pause();
+      shotsound.currentTime = 0; // 再生位置をリセット
+      shotsound.play(); // サウンドを再生
+      //弾
+      bim1.x = player1.x - (20)*Math.sin(t_count/100+Math.PI*2*t_count/bim1.delay);
+      bim1.y = player1.y + (8)*Math.cos(t_count/100+Math.PI*2*t_count/bim1.delay);
+      bim1.radius = 4;
+      bim1.speedx = 4*Math.cos(player1.angle);
+      bim1.speedy = 4*Math.sin(player1.angle);
+      for (var i = 0; i < 10; i++) {
+        shootBiim1();
+      }
+    }
   }
-  else{
-    player1.mp-=1;
-    bim1.count+=1;
-    ctx.beginPath();
-    ctx.fillStyle = player1.headcolor;
-    ctx.globalAlpha = bim1.count/15;
-    ctx.arc(player1.x + 25*Math.cos(player1.angle), player1.y + 25*Math.sin(player1.angle), bim1.count/2, 0,Math.PI * 2);
-    ctx.fill();
-    ctx.closePath();
-    ctx.globalAlpha = 1;
-  }}
 }
 function bombrocket(){
-  if(player1.mp>0){if(rkt.count1>40){
-    rocketsound.pause();
-    rocketsound.currentTime = 0; // 再生位置をリセット
-    rocketsound.play(); // サウンドを再生
-    rkt.angle = player1.angle;
-    rkt.x = player1.x + 25*Math.cos(player1.angle);
-    rkt.y = player1.y + 25*Math.sin(player1.angle);
-    rkt.radius = 5
-    rkt.speedx = 4*Math.cos(player1.angle);
-    rkt.speedy = 4*Math.sin(player1.angle);
-    shootRocket();  
-    rkt.count1 = 0;
-    player1.speedx -= Math.cos(player1.angle);
-    player1.speedy -= Math.sin(player1.angle);
+  if(player1.mp>0){
+    if(rkt.count1>rkt.delay){
+      rocketsound.pause();
+      rocketsound.currentTime = 0; // 再生位置をリセット
+      rocketsound.play(); // サウンドを再生
+      rkt.angle = player1.angle;
+      rkt.x = player1.x + 25*Math.cos(player1.angle);
+      rkt.y = player1.y + 25*Math.sin(player1.angle);
+      rkt.radius = 5
+      rkt.speedx = 4*Math.cos(player1.angle);
+      rkt.speedy = 4*Math.sin(player1.angle);
+      shootRocket();  
+      rkt.count1 = 0;
+      player1.speedx -= Math.cos(player1.angle);
+      player1.speedy -= Math.sin(player1.angle);
+    }
+    else{
+      player1.mp-=50/rkt.delay;
+      rkt.count1+=1;
+      ctx.beginPath();
+      ctx.fillStyle = 'black';
+      ctx.globalAlpha = rkt.count1/rkt.delay/3;
+      ctx.arc(player1.x + 25*Math.cos(player1.angle), player1.y + 25*Math.sin(player1.angle), 5, 0,Math.PI * 2);
+      ctx.arc(player1.x + 20*Math.cos(player1.angle), player1.y + 20*Math.sin(player1.angle), 5, 0,Math.PI * 2);
+      ctx.fill();
+      ctx.closePath();
+      ctx.globalAlpha = 1;
+    }
   }
-  else{
-    player1.mp-=1;
-    rkt.count1+=1;
-    ctx.beginPath();
-    ctx.fillStyle = 'black';
-    ctx.globalAlpha = rkt.count1/100;
-    ctx.arc(player1.x + 25*Math.cos(player1.angle), player1.y + 25*Math.sin(player1.angle), 5, 0,Math.PI * 2);
-    ctx.arc(player1.x + 20*Math.cos(player1.angle), player1.y + 20*Math.sin(player1.angle), 5, 0,Math.PI * 2);
-    ctx.fill();
-    ctx.closePath();
-    ctx.globalAlpha = 1;
-  }}
+  if(player1.drone>0){
+    if(t_count%Math.ceil(rkt.delay*4/player1.drone)==0){
+      rocketsound.pause();
+      rocketsound.currentTime = 0; // 再生位置をリセット
+      rocketsound.play(); // サウンドを再生
+      //弾
+      rkt.angle = player1.angle;
+      rkt.x = player1.x - (20)*Math.sin(t_count/100+Math.PI*2*t_count/bim1.delay);
+      rkt.y = player1.y + (8)*Math.cos(t_count/100+Math.PI*2*t_count/bim1.delay);
+      rkt.radius = 5;
+      rkt.speedx = 3*Math.cos(player1.angle);
+      rkt.speedy = 3*Math.sin(player1.angle);
+      shootRocket();
+    }
+  }
 }
 
 //Text
@@ -2184,6 +2584,104 @@ function Text(text,t){
     ctx.font = '24px Arial';
     ctx.fillText(text, canvas.width/2-100, canvas.height/2);
   }
+}
+
+//menu and psuse
+function menu(){
+  menuctx.fillStyle = '#ECB8B8'; //236, 184, 184
+  menuctx.globalAlpha = 0.3;
+  menuctx.fillRect(100,100,400,390);
+  //for calculate process speed
+  ps++;
+}
+function drawstatus(){
+  menuctx.clearRect(0, 490, menuCanvas.width, menuCanvas.height-490);
+  //描画psuse
+  menuctx.fillStyle = '#ECB8B8'; //236, 184, 184
+  menuctx.globalAlpha = 1;
+  menuctx.fillRect(520,500,80,30);
+  menuctx.font = '20px Arial';
+  menuctx.fillStyle = '#251743'; 
+  //for status frames
+  menuctx.fillRect(90,502,100,6);
+  menuctx.fillRect(90,527,100,6);
+  menuctx.fillRect(90,552,100,6);
+  menuctx.fillRect(90,577,100,6);
+  menuctx.fillRect(280,502,100,6);
+  menuctx.fillRect(280,527,100,6);
+  menuctx.fillRect(280,552,100,6);
+  menuctx.fillRect(304,576,77,8);
+  //pause frame
+  menuctx.fillRect(521,501,78,28);
+  menuctx.fillStyle = '#ECB8B8'; //236, 184, 184
+  menuctx.fillText("PAUSE", 528, 522);
+  //描画status
+  menuctx.font = '12px Arial';
+  if(player1.state*10<player1.expcap/10 || player1.grade<=player1.grade1){menuctx.fillStyle='#966464';} //not enough exp
+  menuctx.fillText("maxHP", 10, 510);
+  if(player1.state*10<player1.expcap/10 || player1.grade<=player1.grade2){menuctx.fillStyle='#966464';} //not enough exp
+  else{menuctx.fillStyle = '#ECB8B8';}
+  menuctx.fillText(" HP +", 10, 535);
+  if(player1.state*10<player1.expcap/10 || player1.grade<=player1.grade3){menuctx.fillStyle='#966464';} //not enough exp
+  else{menuctx.fillStyle = '#ECB8B8';}
+  menuctx.fillText("maxEP", 10, 560);
+  if(player1.state*10<player1.expcap/10 || player1.grade<=player1.grade4){menuctx.fillStyle='#966464';} //not enough exp
+  else{menuctx.fillStyle = '#ECB8B8';}
+  menuctx.fillText(" EP +", 10, 585);
+  if(player1.state*10<player1.expcap/10 || player1.grade<=player1.grade5){menuctx.fillStyle='#966464';} //not enough exp
+  else{menuctx.fillStyle = '#ECB8B8';}
+  menuctx.fillText(" ATK", 200, 510);
+  if(player1.state*10<player1.expcap/10 || player1.grade<=player1.grade6){menuctx.fillStyle='#966464';} //not enough exp
+  else{menuctx.fillStyle = '#ECB8B8';}
+  menuctx.fillText("A-Spe", 200, 535);
+  if(player1.state*10<player1.expcap/10 || player1.grade<=player1.grade7){menuctx.fillStyle='#966464';} //not enough exp
+  else{menuctx.fillStyle = '#ECB8B8';}
+  menuctx.fillText("Speed", 200, 560);
+  if(player1.state*10<player1.expcap){menuctx.fillStyle='#966464';} //not enough exp
+  menuctx.fillText(" EXP", 200, 585);
+  menuctx.fillStyle = 'green';
+  menuctx.fillText(Math.ceil(player1.maxhp), 60, 510);
+  menuctx.fillText(Math.ceil(player1.hpgain*600)/10, 60, 535);
+  menuctx.fillRect(90,502,player1.maxhp/4,6);
+  menuctx.fillRect(90,527,player1.hpgain*500,6);
+  menuctx.fillStyle = 'blue';
+  menuctx.fillText(Math.ceil(player1.maxmp), 60, 560);
+  menuctx.fillText(Math.ceil(player1.mpgain*600)/10, 60, 585);
+  menuctx.fillRect(90,552,player1.maxmp/4,6);
+  menuctx.fillRect(90,577,player1.mpgain*200/3,6);
+  menuctx.fillStyle = 'red';
+  if(player1.type==0){
+    menuctx.fillText(Math.ceil(blt.damage*20), 250, 510);
+    menuctx.fillText(Math.ceil(600/blt.delay)/10, 250, 535);
+    menuctx.fillRect(280,502,blt.damage*20,6);
+    menuctx.fillRect(280,527,500/blt.delay,6);
+  }
+  else if(player1.type==1){
+    menuctx.fillText(Math.ceil(bim1.damage*20), 250, 510);
+    menuctx.fillText(Math.ceil(600/bim1.delay)/10, 250, 535);
+    menuctx.fillRect(280,502,bim1.damage*20,6);
+    menuctx.fillRect(280,527,500/bim1.delay,6);
+  }
+  else if(player1.type==2){
+    menuctx.fillText(Math.ceil(rkt.damage), 250, 510);
+    menuctx.fillText(Math.ceil(600/rkt.delay)/10, 250, 535);
+    menuctx.fillRect(280,502,rkt.damage,6);
+    menuctx.fillRect(280,527,500/rkt.delay,6);
+  }
+  else if(player1.type==-1){
+    menuctx.fillText(Math.ceil(bim1.damage*3), 250, 510);
+    menuctx.fillText(Math.ceil(180/bim1.delay), 250, 535);
+    menuctx.fillRect(280,502,bim1.damage*3,6);
+    menuctx.fillRect(280,527,1500/bim1.delay,6);
+  }
+  menuctx.fillStyle = 'orange';
+  menuctx.fillText(Math.ceil(player1.spe*60), 250, 560);
+  menuctx.fillRect(280,552,player1.spe*10,6);
+  menuctx.fillStyle = 'yellow';
+  menuctx.fillText(player1.state*10+" / "+player1.expcap, 250, 585);
+  menuctx.fillRect(305,577,player1.state*750/player1.expcap,6);
+  //for calculate process speed
+  ps++;
 }
 
 //start
@@ -2199,10 +2697,104 @@ function start(){
     ctx.fillText("A nuclear bomb coming in "+limit+" sec", 150, 100);
     ctx.fillText("Escape through the enemies", 150, 150);
     ctx.fillText("Go to the warp gate to survive", 150, 200);
+    ctx.fillText("[Space]→ no tank: extremely hard", 150, 485);
   ctx.font = '40px Arial';
-    ctx.fillText("Push SpaceKey to Start", 100, 300);
+    ctx.fillText("Push [1] [2] [3] Key to choose", 50, 270);
+    ctx.fillText("the Type of your Tank", 100, 315);
   ctx.lineWidth = 2; // 枠線の幅
   ctx.strokeStyle = 'black';
+  //menu欄
+  drawstatus();
+  //for test play
+  itm.type=2;
+  itm.y=400;
+  for (var i = 0; i < 10; i++){
+    itm.x=220+20*i;
+    generateItem();
+  }
+  itm.type=0;
+  for (var i = 0; i < 6; i++){
+    itm.x=420+20*i;
+    generateItem();
+  }
+}
+//for game start and restart
+function handleKeyPress(event) {
+  if (player1.hp<1 && event.code === "Space" && !isFunctionExecuted){
+    location.reload();
+  }
+  if (event.code === "Space" && isFunctionExecuted){
+    isFunctionExecuted = false; // フラグをtrue→二度実行されない
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    backctx.clearRect(0, 0, canvas.width, canvas.height);
+    //player1のタイプ
+    player1.type=-1;
+    player1.headcolor='silver'; 
+    player1.bodycolor='dimgray';
+    player1.maxhp=20;
+    player1.hp=20;
+    player1.hpgain=1/30;
+    player1.maxmp=80;
+    player1.mp=80;
+    player1.mpgain=1/3;
+    player1.spe=4.3;
+    drawstatus();
+    //sound
+    audio_buffer_node.start(0); // オーディオを再生
+    prepareAudioBufferNode(); // 次回の再生のために準備を行う 
+    //main
+    drowMap(Matrix);
+    drawstatus();
+    gameLoop();
+  }
+  if (event.code === "Digit1" && isFunctionExecuted) {
+    isFunctionExecuted = false; // フラグをtrue→二度実行されない
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    backctx.clearRect(0, 0, canvas.width, canvas.height);
+    //player1のタイプ
+    player1.type=0; 
+    player1.headcolor='olive'; 
+    player1.bodycolor='darkolivegreen'
+    //sound
+    audio_buffer_node.start(0); // オーディオを再生
+    prepareAudioBufferNode(); // 次回の再生のために準備を行う 
+    //main
+    drowMap(Matrix);
+    drawstatus();
+    gameLoop();
+  }
+  else if (event.code === "Digit2" && isFunctionExecuted) {
+    isFunctionExecuted = false; // フラグをtrue→二度実行されない
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    backctx.clearRect(0, 0, canvas.width, canvas.height);
+    //player1のタイプ
+    player1.type=1; 
+    player1.headcolor='darkviolet'; 
+    player1.bodycolor='indigo'
+    //sound
+    audio_buffer_node.start(0); // オーディオを再生
+    prepareAudioBufferNode(); // 次回の再生のために準備を行う 
+    //main
+    drowMap(Matrix);
+    drawstatus();
+    gameLoop();
+  }
+  else if (event.code === "Digit3" && isFunctionExecuted) {
+    isFunctionExecuted = false; // フラグをtrue→二度実行されない
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    backctx.clearRect(0, 0, canvas.width, canvas.height);
+    //player1のタイプ
+    player1.type=2; 
+    player1.headcolor='silver'; 
+    player1.bodycolor='dimgray'
+    //sound
+    audio_buffer_node.start(0); // オーディオを再生
+    prepareAudioBufferNode(); // 次回の再生のために準備を行う 
+    //main
+    drowMap(Matrix);
+    drawstatus();
+    gameLoop();
+  }
 }
 
 //post-processing
@@ -2217,7 +2809,7 @@ function finish(){
     ctx.fillText(':', 250, 110);
     ctx.fillText(':', 250, 170);
     ctx.fillText(':', 250, 230);
-    ctx.fillText('Push SpaceKey to Restart', 10, canvas.height-40);
+    ctx.fillText('Push [Space] to Restart', 10, canvas.height-40);
     ctx.font = '50px Arial';
     ctx.globalAlpha = 1;
     ctx.fillText('Failed to survive...', 100, 300);
@@ -2236,7 +2828,7 @@ function goalin(){
   ctx.fillText(':', 250, 110);
   ctx.fillText(':', 250, 170);
   ctx.fillText(':', 250, 230);
-  ctx.fillText('Push SpaceKey to Restart', 10, canvas.height-40);
+  ctx.fillText('Push [Space] to Restart', 10, canvas.height-40);
   ctx.font = '50px Arial';
   ctx.fillStyle = 'gold';
   ctx.globalAlpha = 1;
@@ -2245,7 +2837,7 @@ function goalin(){
   ctx.fillText(player1.result, 300, 110);
   ctx.fillText(player1.taken, 300, 170);
   ctx.fillText(player1.kill, 300, 230);
-  button2.style.display = "block";
+  button2.style.display = "inline-block";
   //clickbutton button
   button2.onclick = function() {
     window.location.href = 'stage'+(stage+1)+'.html';
@@ -2256,9 +2848,11 @@ function goalin(){
 //main
 function gameLoop() {
   //reset
-  ctx.globalAlpha = 1;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
+
+  //操作
+  controll();
+
   //描画、動作
   drawPlayers();
   drawNplayer();
@@ -2274,11 +2868,13 @@ function gameLoop() {
   if(rockets.length>0){  
     drawRocket();
   }
-  if(goal.x<canvas.width+50){
+  if(goal.x<canvas.width+50 && goal.x>-50){
     drawgoal()}
+  if(items.length>0){
+    drawItem()}
 
   //ギミック
-  Rain(limit-20);
+  Rain(limit/2);
   canon(limit-30);
 
   //text
@@ -2287,10 +2883,6 @@ function gameLoop() {
   Text('Push Shift on the left',3)
   Text('Push [f] This is special move',4.5)
   Text('Push [f] This is special move',6)
-  
-
-  //操作
-  controll();
 
   //ブロック跳ね返り
   blockCollision(Matrix);
@@ -2304,6 +2896,8 @@ function gameLoop() {
   //弾
   bltBim1_enmBim2();
   rocketBltEnmBim();
+  //item
+  playerItem();
 
   //時間経過で消滅
   bullets.forEach((bullet, bulletIndex) => {
@@ -2347,6 +2941,25 @@ function gameLoop() {
       bombsound.pause();
       bombsound.currentTime = 0; // 再生位置をリセット
       bombsound.play(); // サウンドを再生
+      //itemを確率で残す
+      if(Math.random()<0.05){
+        itm.type = 0;
+        itm.x = npc.x-5;
+        itm.y = npc.y-5;
+        generateItem();
+      }
+      else if(Math.random()<0.1){
+        itm.type = 1;
+        itm.x = npc.x-5;
+        itm.y = npc.y-5;
+        generateItem();
+      }
+      else{
+        itm.type = 2;
+        itm.x = npc.x-5;
+        itm.y = npc.y-5;
+        generateItem();
+      }
     }
   });
 
@@ -2356,11 +2969,11 @@ function gameLoop() {
   enm.count+=1;
 
   //hp and mp
-  if(player1.hp<100){
-    player1.hp+=1/30;
+  if(player1.hp<player1.maxhp){
+    player1.hp+=player1.hpgain;
   }
-  if(player1.mp<100){
-    player1.mp+=1/2;
+  if(player1.mp<player1.maxmp){
+    player1.mp+=player1.mpgain;
   }
  
   //finish
@@ -2381,7 +2994,7 @@ function gameLoop() {
     }
     return;
   }
-  else{
+  else if(ispause==0){
     requestAnimationFrame(gameLoop);
   }
 
@@ -2418,8 +3031,8 @@ document.addEventListener('keydown', (event) => {
 document.addEventListener('keyup', (event) => {
     controller[event.code] = false;
 });
-canvas.addEventListener("mousemove", function(event) {
-  const rect = canvas.getBoundingClientRect();
+menuCanvas.addEventListener("mousemove", function(event) {
+  const rect = menuCanvas.getBoundingClientRect();
   const mouse_x = event.clientX - rect.left;
   const mouse_y = event.clientY - rect.top;
   if(player1.x>mouse_x){
@@ -2427,6 +3040,151 @@ canvas.addEventListener("mousemove", function(event) {
   }
   else{
     player1.angle = Math.atan((player1.y-mouse_y)/(player1.x-mouse_x));
+  }
+  //pause
+  if(mouse_y>490){
+    drawstatus();
+    if(ispause==0 && mouse_x>520 && mouse_x<600 && mouse_y<530 && mouse_y>500){
+        menuctx.font = '20px Arial';
+        menuctx.fillStyle = '#966464';
+        menuctx.fillText("PAUSE", 528, 522);
+    }
+    if(mouse_y>503 && mouse_x>12 && mouse_x<233 && mouse_y<588 && player1.state*10>=player1.expcap/10){
+      menuctx.fillStyle='#966464';
+      menuctx.font = '12px Arial';
+      if(mouse_x<48){
+        if(mouse_y<512 && player1.grade>player1.grade1){
+          menuctx.fillText("maxHP", 10, 510);
+          menuctx.fillText("←raise (-10%EXP)", mouse_x, mouse_y);
+        }
+        if(mouse_y>528 && mouse_y<537 && player1.grade>player1.grade2){
+          menuctx.fillText(" HP +", 10, 535);
+          menuctx.fillText("←raise (-10%EXP)", mouse_x, mouse_y);
+        }
+        if(mouse_y>553 && mouse_y<563 && player1.grade>player1.grade3){
+          menuctx.fillText("maxEP", 10, 560);
+          menuctx.fillText("←raise (-10%EXP)", mouse_x, mouse_y);
+        }
+        if(mouse_y>578 && player1.grade>player1.grade4){
+          menuctx.fillText(" EP +", 10, 585);
+          menuctx.fillText("←raise (-10%EXP)", mouse_x, mouse_y);
+        }
+      }
+      else if(mouse_x>202){
+        if(mouse_y<512 && player1.grade>player1.grade5){
+          menuctx.fillText(" ATK", 200, 510);
+          menuctx.fillText("←raise (-10%EXP)", mouse_x, mouse_y);
+        }
+        if(mouse_y>528 && mouse_y<537 && player1.grade>player1.grade6){
+          menuctx.fillText("A-Spe", 200, 535);
+          menuctx.fillText("←raise (-10%EXP)", mouse_x, mouse_y);
+        }
+        if(mouse_y>553 && mouse_y<563 && player1.grade>player1.grade7){
+          menuctx.fillText("Speed", 200, 560);
+          menuctx.fillText("←raise (-10%EXP)", mouse_x, mouse_y);
+        }
+        if(mouse_y>578 && player1.state*10>=player1.expcap){
+          menuctx.fillText(" EXP", 200, 585);
+          menuctx.fillText("UP-GRADE", mouse_x, mouse_y);
+        }
+      }
+    }
+  }
+});
+//pauseをクリックしてメニュウが表示される
+menuCanvas.addEventListener("click", function(event) {
+  const rect = menuCanvas.getBoundingClientRect();
+  const mouse_x = event.clientX - rect.left;
+  const mouse_y = event.clientY - rect.top;
+  //click outside menu to continue
+  if(ispause==1 && mouse_y<490 && (mouse_x<100 || mouse_x>500 || mouse_y<100)){
+    ispause=0;
+    menuctx.clearRect(0, 0, menuCanvas.width, 500);
+    gameLoop();
+  }
+  //click botton to open menu
+  if(mouse_x>520 && mouse_x<600 && mouse_y<530 && mouse_y>500){
+    drawstatus();
+    ispause=1;
+    menuctx.clearRect(0, 0, menuCanvas.width, 500);
+    menu();
+  }
+  //upgrade powerup
+  if(mouse_y>503 && mouse_x>12 && mouse_x<233 && mouse_y<588 && player1.state*10>=player1.expcap/10){
+    if(mouse_x<48){
+      if(mouse_y<512 && player1.grade>player1.grade1){//hp
+        player1.maxhp *= 1.1;
+        player1.state -= player1.expcap/100;
+        player1.grade1 += 1;
+        drawstatus();
+      }
+      if(mouse_y>528 && mouse_y<537 && player1.grade>player1.grade2){//hp+
+        player1.hpgain *= 1.1
+        player1.state -= player1.expcap/100;
+        player1.grade2 += 1;
+        drawstatus();
+      }
+      if(mouse_y>553 && mouse_y<563 && player1.grade>player1.grade3){//mp
+        player1.maxmp *= 1.1
+        player1.state -= player1.expcap/100;
+        player1.grade3 += 1;
+        drawstatus();
+      }
+      if(mouse_y>578 && player1.grade>player1.grade4){//mp+
+        player1.mpgain *= 1.1
+        player1.state -= player1.expcap/100;
+        player1.grade4 += 1;
+        drawstatus();
+      }
+    }
+    else if(mouse_x>202){
+      if(mouse_y<512 && player1.grade>player1.grade5){//atk
+        if(player1.type==0){
+          blt.damage *= 1.1;
+        }
+        if(player1.type==1){
+          bim1.damage *= 1.1;
+        }
+        if(player1.type==2){
+          rkt.damage *= 1.1;
+        }
+        player1.state -= player1.expcap/100;
+        player1.grade5 += 1;
+        drawstatus();
+      }
+      if(mouse_y>528 && mouse_y<537 && player1.grade>player1.grade6){//as
+        if(player1.type==0){
+          blt.delay *= 0.9;
+        }
+        if(player1.type==1){
+          bim1.delay *= 0.9;
+        }
+        if(player1.type==2){
+          rkt.delay *= 0.9;
+        }
+        player1.state -= player1.expcap/100;
+        player1.grade6 += 1;
+        drawstatus();
+      }
+      if(mouse_y>553 && mouse_y<563 && player1.grade>player1.grade7){//spe
+        player1.spe *= 1.05;
+        player1.state -= player1.expcap/100;
+        player1.grade7 += 1;
+        drawstatus();
+      }
+      if(mouse_y>578 && player1.state*10>=player1.expcap){//EXP upgade
+        player1.grade+=1;
+        player1.state = 0;
+        //暫定
+        player1.maxhp = (player1.grade+1)*50;
+        player1.hpgain = 1/30+(player1.grade-1)*0.01;
+        player1.maxmp = (player1.grade+1)*50;
+        player1.mpgain = 0.3+player1.grade*0.2;
+        player1.spe = 4+player1.grade*0.5;
+        player1.expcap = (player1.grade+1)*50;
+        drawstatus();
+      }
+    }
   }
 });
 // EventListener for Game Start
