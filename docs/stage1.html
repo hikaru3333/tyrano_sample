@@ -813,7 +813,7 @@ function drawNplayer(){
     else if(npc.speedx<-0.3){
       npc.speedx*=0.8;
     }
-  return npc.x > -10 && npc.x < 4000 && npc.y > -10 && npc.y < canvas.height+10;
+  return npc.x > -120 && npc.x < canvas.width+120 && npc.y > -10 && npc.y < canvas.height+10;
   });
 }
 function drawBullet(){
@@ -1219,8 +1219,8 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
     for (let col = 0; col < rowLength; col++) {
       const blockX = col * (BLOCK_SIZE + BLOCK_GAP) - mapX;
       const blockY = row * (BLOCK_SIZE + BLOCK_GAP);
-      if(blockX>-150 && blockY<canvas.width+150){
-        if (BLOCK_MATRIX[row][col] === 1 && blockX<canvas.width+150 && blockX>-100){
+      if(blockX>-150 && blockX<canvas.width+150){
+        if (BLOCK_MATRIX[row][col] === 1 && blockX<canvas.width+120 && blockX>-120){
           //player1跳ね返り
           if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
             if(player1.y + player1.radius*3/4 > blockY && player1.y < blockY + BLOCK_SIZE/4){
@@ -1386,7 +1386,7 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           // ブロックを変更
           BLOCK_MATRIX[row][col] = 7;
         }
-        if (BLOCK_MATRIX[row][col] === 3 && blockX<canvas.width+150 && blockX>-100){
+        if (BLOCK_MATRIX[row][col] === 3 && blockX<canvas.width-100 && blockX>100){
           if(player1.x > blockX && player1.x < blockX + BLOCK_SIZE && player1.y + player1.radius/2 > blockY && player1.y < blockY + BLOCK_SIZE){
             itemsound.pause();
             itemsound.currentTime = 0; // 再生位置をリセット
@@ -1435,7 +1435,7 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           //for calculate process speed
           ps++;
         }
-        if (BLOCK_MATRIX[row][col] === 5 && blockX<canvas.width+150 && blockX>-100){
+        if (BLOCK_MATRIX[row][col] === 5 && blockX<canvas.width+120 && blockX>-120){
           //player1跳ね返り
           if(player1.x + player1.radius/4 > blockX && player1.x - player1.radius/4< blockX + BLOCK_SIZE){
             if(player1.y + player1.radius*3/4 > blockY && player1.y < blockY + BLOCK_SIZE/4){
@@ -1614,8 +1614,8 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           rockets.forEach((rocket, rocketIndex) => {
             if (rocket.x + rkt.radius > blockX && rocket.x - rkt.radius< blockX + BLOCK_SIZE &&
                 rocket.y + rkt.radius > blockY && rocket.y - rkt.radius< blockY + BLOCK_SIZE) {
-              // ブロックを破壊
-              BLOCK_MATRIX[row][col] = 0;
+              // ブロックを破壊→９
+              BLOCK_MATRIX[row][col] = 9;
               for (var i = 0; i < 20; i++) {
                 enm.x = blockX + BLOCK_SIZE/2 + 10*Math.cos(i*Math.PI/10);
                 enm.y = blockY + BLOCK_SIZE/2 + 10*Math.sin(i*Math.PI/10);
@@ -1655,17 +1655,25 @@ function blockCollision(BLOCK_MATRIX){ //bullet and enemy are included
           ps++;
           });
         }
-        if (BLOCK_MATRIX[row][col] === 7 && (blockX>canvas.width+150 || blockX<-100)){
+        if (BLOCK_MATRIX[row][col] === 7 && (blockX>canvas.width+120 || blockX<-120)){
           BLOCK_MATRIX[row][col] = 2;
         }
         if (BLOCK_MATRIX[row][col] === 8 && t_count%60==0){
-        if(Math.random()<1/6){
+        if(Math.random()<1/10){
           //regenerate block1
           BLOCK_MATRIX[row][col] = 1;
           //map redraw
           drowMap(Matrix);
         }
       }
+        if (BLOCK_MATRIX[row][col] === 9 && t_count%60==0){
+          if(Math.random()<1/10){
+            //regenerate block1
+            BLOCK_MATRIX[row][col] = 6;
+            //map redraw
+            drowMap(Matrix);
+          }
+        }
       }
     } 
   }
